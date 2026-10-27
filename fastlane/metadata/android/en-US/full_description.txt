@@ -1,1 +1,1 @@
-Grit is a ToDo List and Daily habit tracker app that lets you visualize your progress.
+Grit Glass is a to-do list organised as categories, tasks and sections, with coloured titles, a Today view, reminders, a home screen widget and JSON backups. Its controls are liquid glass over a warm paper page.

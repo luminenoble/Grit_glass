@@ -1,1 +1,1 @@
-A Simple ToDo List and Habit Tracker
+A simple to-do list with liquid glass controls

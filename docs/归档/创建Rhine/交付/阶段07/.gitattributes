@@ -1,3 +1,0 @@
-# Keep original Android/Gradle/emulator output; its CRLF and padding are evidence.
-logs/** -whitespace
-*-gfx.txt -whitespace

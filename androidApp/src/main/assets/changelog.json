@@ -1,85 +1,13 @@
 [
   {
-    "version": "6.2.4",
+    "version": "1.0.0",
     "changes": [
-      "Rhine display settings: a new Material page with column colour strength, background blur, background saturation, frost whiteness and grain, previewed live",
-      "Tasks widget: no longer switches text size on its own; it draws at the chosen size from the first frame",
-      "Tasks widget: tasks with sections show their step count again, and their rows no longer have a blank gap"
-    ]
-  },
-  {
-    "version": "6.2.3",
-    "changes": [
-      "Rhine: blocks are frosted glass with crisp outlines and edges; only what you see through the glass is blurred, instead of blurring whole blocks",
-      "Rhine: each block's title now sits on its long face with the picture, and blocks are thinner, like discs; the top face no longer carries text and the parent name is no longer repeated on every block",
-      "Rhine: every block in a column takes the colour of its first block (the category, or the task on the section layer), gradients included, spread evenly over the block; this replaces the rainbow sheen",
-      "Rhine display settings: one title size instead of top and side sizes; block depth now ranges 4–16 dp (default 8) and the gap along a column defaults to 24 dp",
-      "Tasks widget: gradient title colours now show as a gradient instead of only the first colour"
-    ]
-  },
-  {
-    "version": "6.2.2",
-    "changes": [
-      "Rhine: every block with a picture shows it, not only the selected one; blocks away from the selection are blurred more lightly than before",
-      "Rhine: glass blocks catch the light like a disc, with a soft rainbow sheen that slides as you move, a window glint and bright edges",
-      "Rhine editor: the lifted block has the same glass look, and the block array stays behind it as a softly blurred background"
-    ]
-  },
-  {
-    "version": "6.2.1",
-    "changes": [
-      "Text colours now show exactly as picked; the automatic darkening that changed chosen colours is gone",
-      "The colour picker takes RGB and hex values, and can make a left-to-right gradient of up to 5 colours",
-      "Sections have their own title colour, solid or gradient; black by default",
-      "Copy and paste colours between categories, tasks and sections from the colour picker",
-      "Rhine: blocks are now clear glass, so the blocks and pictures behind show through; only the selected block stays sharp and everything else is blurred, more so further away"
-    ]
-  },
-  {
-    "version": "6.1.3",
-    "changes": [
-      "Rhine: blocks are now frosted warm glass with a soft depth blur towards the distance; the focused task shows its whole image like the category block, seen through the glass blocks in front, replacing the thin strips from 6.1.2"
-    ]
-  },
-  {
-    "version": "6.1.2",
-    "changes": [
-      "Rhine: tasks with an image now show it in the category view as a strip along the side of their block, in place of the repeated category name; the category's own image is unchanged"
-    ]
-  },
-  {
-    "version": "6.1.1",
-    "changes": [
-      "Selected categories show as a raised bright chip with bold text instead of a black outline; finished tasks settle into a darker card with a struck-through title and an olive check mark",
-      "Rhine: picking an image no longer closes the editor when the gallery opens full screen or in portrait; the editor stays open so you can still save or cancel",
-      "Rhine: fixed a draft name from a previous editor appearing on another category or task after the screen was recreated"
-    ]
-  },
-  {
-    "version": "6.1.0",
-    "changes": [
-      "Restyled the Task page, Settings, dialogs, sheets and the task widget with a warm liquid glass material, with a Reduce transparency switch in Look and Feel",
-      "Rhine: replaced the right-side focus panel with a bottom glass toolbar; search and position panels are glass overlays",
-      "Rhine: opening a Category now lifts the block and turns the camera before fading into its Tasks",
-      "Rhine: editing opens a split view with a live 3D preview of the block beside a glass editor, with lift, turn and return animations",
-      "Optional gallery images for Categories and Tasks, picked in the Rhine editor or the Task page and shown on the block's side face; images stay on the device and are not part of backups",
-      "Added an image fit setting (top-left crop, centre crop or whole image) to the Rhine display settings"
-    ]
-  },
-  {
-    "version": "6.0.8",
-    "changes": [
-      "Renamed the app to Grhinet; all other functionality and styling are unchanged"
-    ]
-  },
-  {
-    "version": "6.0.7",
-    "changes": [
-      "Renamed the app to Rrit_Rhine",
-      "Replaced dark selected category fills with a light background and black outline, including Today",
-      "Added a darker outline to completed task cards",
-      "Released the Category / Task / Section workspace and the Rhine view with search, ordering and display settings",
-      "Uses a separate Rhine database and the grit_rhine formatVersion=1 backup format"
+      "First release of Grit Glass: the Grhinet to-do app without the Rhine view and task pictures; it installs alongside Grhinet and imports Grhinet backups",
+      "Buttons are clear liquid glass that bends what scrolls beneath it, with a slight colour fringe at the rim (Android 13 and later)",
+      "Pressing a button fills it with light instead of darkening it",
+      "Every button, category chip and tab is the same size; Add task is a larger clear glass lens instead of a dark button, and Save and Done are glass too",
+      "The bottom bar floats over the page, and lists and editors scroll on beneath it",
+      "Switches turn olive when on"
     ]
   }
 ]

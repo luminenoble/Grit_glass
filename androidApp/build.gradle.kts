@@ -215,7 +215,8 @@ tasks.register("generateChangelog") {
         val json = buildString {
             append("[\n")
 
-            map.entries.take(10).forEachIndexed { index, entry ->
+            val entries = map.entries.take(10)
+            entries.forEachIndexed { index, entry ->
                 append("  {\n")
                 append("    \"version\": \"${entry.key}\",\n")
                 append("    \"changes\": [\n")
@@ -229,7 +230,7 @@ tasks.register("generateChangelog") {
                 append("    ]\n")
                 append("  }")
 
-                if (index != 9) append(",")
+                if (index != entries.lastIndex) append(",")
                 append("\n")
             }
 

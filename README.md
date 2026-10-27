@@ -1,16 +1,14 @@
-# Grhinet
+# Grit Glass
 
-基于 [Grit](https://github.com/shub39/Grit) 修改的 Android 工作记录应用，保留原项目的 GPL-3.0 许可。
+基于 [Grit](https://github.com/shub39/Grit) 修改的 Android 待办应用，保留原项目的 GPL-3.0 许可。从 [Grhinet](https://github.com/luminenoble/Grit) 6.2.4 分出，去掉了 Rhine 场景和任务插图，只保留待办本身；Grhinet 继续单独维护。
 
-正式版：[Grhinet 6.2.4](https://github.com/luminenoble/Grit/releases/tag/6.2.4) · [下载 APK](https://github.com/luminenoble/Grit/releases/download/6.2.4/Grhinet-6.2.4-foss.apk)。Task、设置、对话框和小组件采用暖色液态玻璃，小组件标题支持渐变色；Rhine 的块是光盘般的薄片磨砂玻璃，外形清楚、只有隔着玻璃的后方模糊，每列整体染上列首的颜色（颜色浓度、模糊、白度、颗粒可在显示设置中调），标题与插图同在块的长侧面，并使用底部玻璃工具栏、抬升转向动画、分屏编辑器，支持为类别和任务添加本机图片。现行设计见 [docs](docs/README.md)。
+正式版：[Grit Glass 1.0.0](https://github.com/luminenoble/Grit_glass/releases/tag/1.0.0) · [下载 APK](https://github.com/luminenoble/Grit_glass/releases/download/1.0.0/GritGlass-1.0.0-foss.apk)。可以与 Grhinet 同时安装。
 
-数据以 Category → Task → Section 组织：类别和任务有独立描述，类别、任务和 Section 各有文字颜色（纯色或至多 5 色渐变，可输入 RGB、复制粘贴），Section 支持工作内容、完成日期和手动排序。保留任务手动完成、今天视图、提醒、任务小组件和 JSON 备份。
+数据以 Category → Task → Section 组织：类别和任务有独立描述，类别、任务和 Section 各有文字颜色（纯色或至多 5 色渐变，可输入 RGB、复制粘贴），Section 支持工作内容、完成日期和手动排序。保留任务手动完成、今天视图、提醒、任务小组件和 JSON 备份；备份格式与 Grhinet 相同，两边导出的文件可以互相导入。
 
-相对上游移除了 Habit、统计栏目和 AI 分解，统一米色基础主题。导航为 Task / Setting / Rhine。Rhine 已实现横屏沉浸式两层场景、有限浏览、尾插/删除、调整排序、搜索定位及独立显示设置。
+界面是米色纸面上的液态玻璃控件：按钮是透明玻璃，边缘会弯折后面滚过的内容（Android 13+），按下时被光照亮而不是变暗；所有按钮、类别芯片和导航项同为 44 dp，添加任务是 56 dp 的透明透镜，底部导航胶囊浮在页面上。
 
-新版使用独立的 grit_rhine_database，不读取、不迁移、不清空旧数据库。导入仅支持 grit_rhine、formatVersion=1 的新格式；旧数据由用户提供导出 JSON 后在应用外转换。导入前先校验并展示数量，确认后完整替换当前新库数据。
-
-文档：[项目概览](docs/项目概览.md) · [Rhine](docs/Rhine.md) · [开发与发布](docs/开发与发布.md)。历史方案与阶段记录在 [docs/归档](docs/归档/README.md)。
+文档：[项目概览](docs/项目概览.md) · [开发与发布](docs/开发与发布.md)。
 
 构建：`./gradlew :androidApp:assembleFossDebug`。
 测试：`./gradlew :androidApp:testFossDebugUnitTest`；数据库测试需 Android 设备：`./gradlew :androidApp:connectedFossDebugAndroidTest`。

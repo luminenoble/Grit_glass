@@ -20,7 +20,7 @@ import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.Easing
 import androidx.compose.animation.core.spring
 
-/** Shared timing and easing; Rhine transitions take their curves from here as well. */
+/** Shared timing and easing for presses and transitions. */
 object GritMotion {
     /** Entering, fading in. */
     val EaseStandard: Easing = CubicBezierEasing(0.2f, 0f, 0f, 1f)

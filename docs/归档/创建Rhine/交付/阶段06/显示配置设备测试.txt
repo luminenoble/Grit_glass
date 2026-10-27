@@ -1,6 +1,0 @@
-
-com.shub39.grit.RhineDisplayPersistenceTest:...
-
-Time: 1.047
-
-OK (3 tests)
