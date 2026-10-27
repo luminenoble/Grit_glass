@@ -16,6 +16,8 @@
  */
 package com.shub39.grit.shared.ui.setting.ui.section
 
+import com.shub39.grit.shared.ui.theme.LocalFloatingBarInset
+import com.shub39.grit.shared.ui.components.glass.GlassIconButton
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -91,12 +93,12 @@ fun About(versionName: String, onNavigateBack: () -> Unit, modifier: Modifier = 
                     Text(text = stringResource(Res.string.about), fontFamily = flexFontEmphasis())
                 },
                 navigationIcon = {
-                    FilledTonalIconButton(onClick = onNavigateBack) {
-                        Icon(
-                            imageVector = vectorResource(Res.drawable.nav_arrow_back),
-                            contentDescription = "Navigate Back",
-                        )
-                    }
+                    GlassIconButton(
+                        icon = vectorResource(Res.drawable.nav_arrow_back),
+                        contentDescription = "返回",
+                        onClick = onNavigateBack,
+                        modifier = Modifier.padding(horizontal = 8.dp),
+                    )
                 },
             )
         },
@@ -107,7 +109,7 @@ fun About(versionName: String, onNavigateBack: () -> Unit, modifier: Modifier = 
             contentPadding =
                 PaddingValues(
                     top = padding.calculateTopPadding() + 16.dp,
-                    bottom = padding.calculateBottomPadding() + 60.dp,
+                    bottom = maxOf(padding.calculateBottomPadding(), LocalFloatingBarInset.current) + 24.dp,
                     start = padding.calculateLeftPadding(LocalLayoutDirection.current) + 16.dp,
                     end = padding.calculateRightPadding(LocalLayoutDirection.current) + 16.dp,
                 ),
@@ -276,15 +278,11 @@ private fun LazyListScope.aboutApp(versionName: String, uriHandler: UriHandler) 
                     }
 
                     Row {
-                        FilledTonalIconButton(
-                            onClick = { uriHandler.openUri("https://discord.gg/nxA2hgtEKf") }
-                        ) {
-                            Icon(
-                                imageVector = vectorResource(Res.drawable.discord),
-                                contentDescription = "Discord",
-                                modifier = Modifier.size(24.dp),
-                            )
-                        }
+                        GlassIconButton(
+                            icon = vectorResource(Res.drawable.discord),
+                            contentDescription = "Discord",
+                            onClick = { uriHandler.openUri("https://discord.gg/nxA2hgtEKf") },
+                        )
                     }
                 }
             }
@@ -340,22 +338,11 @@ private fun LazyListScope.aboutApp(versionName: String, uriHandler: UriHandler) 
                                 "mailto:cptnshubham39+grit_app@gmail.com" to Res.drawable.email,
                             )
                             .forEach { pair ->
-                                FilledTonalIconButton(
+                                GlassIconButton(
+                                    icon = vectorResource(pair.second),
+                                    contentDescription = null,
                                     onClick = { uriHandler.openUri(pair.first) },
-                                    modifier =
-                                        Modifier.size(
-                                            IconButtonDefaults.smallContainerSize(
-                                                widthOption =
-                                                    IconButtonDefaults.IconButtonWidthOption.Wide
-                                            )
-                                        ),
-                                ) {
-                                    Icon(
-                                        imageVector = vectorResource(pair.second),
-                                        contentDescription = null,
-                                        modifier = Modifier.size(IconButtonDefaults.smallIconSize),
-                                    )
-                                }
+                                )
                             }
                     }
                 }

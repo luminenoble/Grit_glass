@@ -16,6 +16,8 @@
  */
 package com.shub39.grit.shared.ui.components
 
+import com.shub39.grit.shared.ui.components.glass.GlassButtonStyle
+import com.shub39.grit.shared.ui.components.glass.GlassButton
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -111,7 +113,11 @@ fun ChangelogSheet(
                 }
             }
 
-            Button(onClick = onDismissRequest, modifier = Modifier.fillMaxWidth()) {
+            GlassButton(
+                onClick = onDismissRequest,
+                style = GlassButtonStyle.Prominent,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
                 Text(text = stringResource(Res.string.done))
             }
 

@@ -16,6 +16,10 @@
  */
 package com.shub39.grit.shared.ui.task.ui.component
 
+import com.shub39.grit.shared.ui.theme.LocalFloatingBarInset
+import com.shub39.grit.shared.ui.components.glass.GlassButtonStyle
+import com.shub39.grit.shared.ui.components.glass.GlassButton
+import com.shub39.grit.shared.ui.components.glass.GlassIconButton
 import com.shub39.grit.shared.ui.components.glass.GlassAlertDialog
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
@@ -288,7 +292,13 @@ fun TaskUpsertSheetContent(
                     .then(if (fullScreen) Modifier.weight(1f) else Modifier),
             state = sheetListState,
             verticalArrangement = Arrangement.spacedBy(8.dp),
-            contentPadding = PaddingValues(horizontal = 16.dp),
+            // Full screen, the form runs on beneath the floating nav bar.
+            contentPadding =
+                PaddingValues(
+                    start = 16.dp,
+                    end = 16.dp,
+                    bottom = if (fullScreen) LocalFloatingBarInset.current else 0.dp,
+                ),
         ) {
             item {
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
@@ -571,27 +581,19 @@ fun TaskUpsertSheetContent(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
                         if (isEditSheet && !restrictStructure) {
-                            OutlinedButton(
+                            GlassButton(
                                 onClick = { showTaskDelete = true },
                                 enabled = !saving,
-                                shapes =
-                                    ButtonShapes(
-                                        shape = MaterialTheme.shapes.extraLarge,
-                                        pressedShape = MaterialTheme.shapes.small,
-                                    ),
+                                style = GlassButtonStyle.Danger,
                                 modifier = Modifier.weight(1f),
                             ) {
                                 Text(stringResource(Res.string.delete))
                             }
                         }
 
-                        Button(
+                        GlassButton(
                             onClick = saveDraft,
-                            shapes =
-                                ButtonShapes(
-                                    shape = MaterialTheme.shapes.extraLarge,
-                                    pressedShape = MaterialTheme.shapes.small,
-                                ),
+                            style = GlassButtonStyle.Prominent,
                             modifier = Modifier.weight(1f),
                             enabled =
                                 !saving &&
@@ -645,12 +647,13 @@ fun TaskUpsertSheetContent(
                     }
                 },
                 navigationIcon = {
-                    FilledTonalIconButton(onClick = requestClose, enabled = !saving) {
-                        Icon(
-                            imageVector = vectorResource(Res.drawable.nav_arrow_back),
-                            contentDescription = "Navigate Back",
-                        )
-                    }
+                    GlassIconButton(
+                        icon = vectorResource(Res.drawable.nav_arrow_back),
+                        contentDescription = "返回",
+                        onClick = requestClose,
+                        enabled = !saving,
+                        modifier = Modifier.padding(horizontal = 8.dp),
+                    )
                 },
             )
             sheetContent()

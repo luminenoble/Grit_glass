@@ -49,29 +49,19 @@ import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ButtonShapes
-import androidx.compose.material3.FilledTonalButton
-import androidx.compose.material3.FilledTonalIconButton
-import androidx.compose.material3.FilledTonalIconToggleButton
-import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButtonShapes
-import androidx.compose.material3.IconToggleButtonShapes
 import androidx.compose.material3.LargeFlexibleTopAppBar
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.MediumFloatingActionButton
-import androidx.compose.material3.OutlinedIconButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
-import androidx.compose.material3.animateFloatingActionButton
 import androidx.compose.material3.toShape
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.Composable
@@ -102,6 +92,11 @@ import com.shub39.grit.shared.ui.task.TaskAction
 import com.shub39.grit.shared.ui.task.TaskState
 import com.shub39.grit.shared.ui.task.ui.component.CategoryToggleButton
 import com.shub39.grit.shared.ui.task.ui.component.TaskCard
+import com.shub39.grit.shared.ui.components.glass.GlassButton
+import com.shub39.grit.shared.ui.components.glass.GlassFab
+import com.shub39.grit.shared.ui.components.glass.GlassIconButton
+import com.shub39.grit.shared.ui.theme.GlassMetrics
+import com.shub39.grit.shared.ui.theme.LocalFloatingBarInset
 import com.shub39.grit.shared.ui.theme.GlassShapes
 import com.shub39.grit.shared.ui.theme.GlassTier
 import com.shub39.grit.shared.ui.theme.GritRadius
@@ -138,7 +133,7 @@ fun TaskList(
     var editState by remember { mutableStateOf(false) }
 
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
-    // The FAB floats over the list, so it samples the page as its glass backdrop.
+    // The primary lens floats over the list, so it samples the page as its glass backdrop.
     val backdrop = rememberGlassBackdrop()
 
     Column(
@@ -184,50 +179,32 @@ fun TaskList(
         }
     }
 
-    MediumFloatingActionButton(
-        onClick = onAddTask,
-        containerColor = Color.Transparent,
-        contentColor = MaterialTheme.colorScheme.onPrimary,
-        elevation = FloatingActionButtonDefaults.elevation(0.dp, 0.dp, 0.dp, 0.dp),
+    val barInset = LocalFloatingBarInset.current
+    AnimatedVisibility(
+        visible = state.currentCategory != null,
         modifier =
             Modifier.align(Alignment.BottomEnd)
-                .padding(16.dp)
+                .padding(end = 16.dp, bottom = 16.dp + barInset)
                 .then(
                     if (windowSizeClass.widthSizeClass != WindowWidthSizeClass.Expanded) Modifier
                     else Modifier.navigationBarsPadding()
-                )
-                .animateFloatingActionButton(
-                    visible = state.currentCategory != null,
-                    alignment = Alignment.BottomEnd,
-                    scaleAnimationSpec = MaterialTheme.motionScheme.fastSpatialSpec(),
-                    alphaAnimationSpec = MaterialTheme.motionScheme.fastEffectsSpec(),
-                )
-                .glassSurface(
-                    GlassTier.Thin,
-                    FloatingActionButtonDefaults.mediumShape,
-                    backdrop,
-                    tint = MaterialTheme.colorScheme.primary,
                 ),
+        enter = fadeIn(MaterialTheme.motionScheme.fastEffectsSpec()),
+        exit = fadeOut(MaterialTheme.motionScheme.fastEffectsSpec()),
     ) {
-        Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-            Icon(
-                imageVector = vectorResource(Res.drawable.add),
-                contentDescription = null,
-                modifier = Modifier.size(FloatingActionButtonDefaults.MediumIconSize),
-            )
-            AnimatedVisibility(
-                visible =
+        GlassFab(
+            icon = vectorResource(Res.drawable.add),
+            contentDescription = stringResource(Res.string.add_task),
+            onClick = onAddTask,
+            backdrop = backdrop,
+            label =
+                if (
                     state.tasks[state.currentCategory].isNullOrEmpty() ||
-                        windowSizeClass.widthSizeClass == WindowWidthSizeClass.Expanded,
-                enter = fadeIn(MaterialTheme.motionScheme.fastEffectsSpec()),
-                exit = fadeOut(MaterialTheme.motionScheme.fastEffectsSpec()),
-            ) {
-                Text(
-                    text = stringResource(Res.string.add_task),
-                    modifier = Modifier.padding(start = 8.dp),
+                        windowSizeClass.widthSizeClass == WindowWidthSizeClass.Expanded
                 )
-            }
-        }
+                    stringResource(Res.string.add_task)
+                else null,
+        )
     }
 
     if (showDeleteDialog) {
@@ -279,19 +256,12 @@ private fun TaskListTopBar(
                 enter = fadeIn(motionScheme.fastEffectsSpec()),
                 exit = fadeOut(motionScheme.fastEffectsSpec()),
             ) {
-                OutlinedIconButton(
+                GlassIconButton(
+                    icon = vectorResource(Res.drawable.delete),
+                    contentDescription = "删除已完成",
                     onClick = onDeleteClick,
-                    shapes =
-                        IconButtonShapes(
-                            shape = CircleShape,
-                            pressedShape = MaterialTheme.shapes.small,
-                        ),
-                ) {
-                    Icon(
-                        imageVector = vectorResource(Res.drawable.delete),
-                        contentDescription = null,
-                    )
-                }
+                    modifier = Modifier.padding(end = 8.dp),
+                )
             }
 
             AnimatedVisibility(
@@ -299,22 +269,14 @@ private fun TaskListTopBar(
                 enter = fadeIn(motionScheme.fastEffectsSpec()),
                 exit = fadeOut(motionScheme.fastEffectsSpec()),
             ) {
-                FilledTonalIconToggleButton(
+                GlassIconButton(
+                    icon = vectorResource(Res.drawable.reorder),
+                    contentDescription = "调整顺序",
+                    onClick = { onReorderToggle(!isReorderMode) },
                     checked = isReorderMode,
-                    shapes =
-                        IconToggleButtonShapes(
-                            shape = CircleShape,
-                            checkedShape = MaterialTheme.shapes.small,
-                            pressedShape = MaterialTheme.shapes.extraSmall,
-                        ),
-                    onCheckedChange = onReorderToggle,
                     enabled = !state.tasks[state.currentCategory].isNullOrEmpty(),
-                ) {
-                    Icon(
-                        imageVector = vectorResource(Res.drawable.reorder),
-                        contentDescription = null,
-                    )
-                }
+                    modifier = Modifier.padding(end = 12.dp),
+                )
             }
         },
     )
@@ -339,7 +301,8 @@ private fun CategorySelector(
                 .glassSurface(GlassTier.Thin, GlassShapes.Capsule)
                 .clip(GlassShapes.Capsule),
         horizontalArrangement = Arrangement.spacedBy(2.dp),
-        contentPadding = PaddingValues(vertical = 6.dp, horizontal = 8.dp),
+        contentPadding = PaddingValues(GlassMetrics.TrayInset),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         if (!isExpanded) {
             // Virtual "Today" category: tasks flagged isToday across all categories.
@@ -386,38 +349,42 @@ private fun CategorySelector(
                 }
             }
             item {
-                Spacer(modifier = Modifier.width(4.dp))
-                FilledTonalIconButton(onClick = onAddCategoryClick, enabled = !isReorderMode) {
-                    Icon(
-                        imageVector = vectorResource(Res.drawable.add),
-                        contentDescription = "Add Category",
+                Row {
+                    GlassIconButton(
+                        icon = vectorResource(Res.drawable.add),
+                        contentDescription = stringResource(Res.string.add_category),
+                        onClick = onAddCategoryClick,
+                        enabled = !isReorderMode,
+                        inTray = true,
                     )
-                }
-                FilledTonalIconButton(onClick = onEditCategoriesClick, enabled = !isReorderMode) {
-                    Icon(
-                        imageVector = vectorResource(Res.drawable.edit),
-                        contentDescription = "Edit Categories",
+                    GlassIconButton(
+                        icon = vectorResource(Res.drawable.edit),
+                        contentDescription = stringResource(Res.string.edit_categories),
+                        onClick = onEditCategoriesClick,
+                        enabled = !isReorderMode,
+                        inTray = true,
                     )
                 }
             }
         } else {
             item {
-                FilledTonalButton(onClick = onAddCategoryClick, enabled = !isReorderMode) {
-                    Icon(
-                        imageVector = vectorResource(Res.drawable.add),
-                        contentDescription = "Add Category",
-                    )
-                    Spacer(Modifier.width(ButtonDefaults.IconSpacing))
-                    Text(text = stringResource(Res.string.add_category))
-                }
-                Spacer(Modifier.width(8.dp))
-                FilledTonalButton(onClick = onEditCategoriesClick, enabled = !isReorderMode) {
-                    Icon(
-                        imageVector = vectorResource(Res.drawable.edit),
-                        contentDescription = "Edit Categories",
-                    )
-                    Spacer(Modifier.width(ButtonDefaults.IconSpacing))
-                    Text(text = stringResource(Res.string.edit_categories))
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    GlassButton(onClick = onAddCategoryClick, enabled = !isReorderMode) {
+                        Icon(
+                            imageVector = vectorResource(Res.drawable.add),
+                            contentDescription = null,
+                            modifier = Modifier.size(GlassMetrics.Icon),
+                        )
+                        Text(text = stringResource(Res.string.add_category))
+                    }
+                    GlassButton(onClick = onEditCategoriesClick, enabled = !isReorderMode) {
+                        Icon(
+                            imageVector = vectorResource(Res.drawable.edit),
+                            contentDescription = null,
+                            modifier = Modifier.size(GlassMetrics.Icon),
+                        )
+                        Text(text = stringResource(Res.string.edit_categories))
+                    }
                 }
             }
         }
@@ -478,7 +445,14 @@ private fun CompactTasksView(
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                     state = lazyListState,
-                    contentPadding = PaddingValues(8.dp),
+                    // Runs on beneath the floating bar and the primary lens.
+                    contentPadding =
+                        PaddingValues(
+                            start = 8.dp,
+                            top = 8.dp,
+                            end = 8.dp,
+                            bottom = LocalFloatingBarInset.current + GlassMetrics.Primary + 24.dp,
+                        ),
                     verticalArrangement = Arrangement.spacedBy(2.dp),
                 ) {
                     itemsIndexed(items = reorderableTasks, key = { _, it -> it.id }) { index, task
@@ -699,16 +673,13 @@ private fun ExpandedTasksView(
                                 modifier = Modifier.padding(end = 8.dp).weight(1f),
                             )
 
-                            FilledTonalIconToggleButton(
+                            GlassIconButton(
+                                icon = vectorResource(Res.drawable.reorder),
+                                contentDescription = "调整顺序",
+                                onClick = { showReorderDialog = !showReorderDialog },
                                 checked = showReorderDialog,
-                                onCheckedChange = { showReorderDialog = it },
                                 enabled = !isTodayPanel && displayTasks.size > 1,
-                            ) {
-                                Icon(
-                                    imageVector = vectorResource(Res.drawable.reorder),
-                                    contentDescription = null,
-                                )
-                            }
+                            )
                         }
                     }
 

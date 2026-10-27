@@ -16,6 +16,10 @@
  */
 package com.shub39.grit.shared.ui.task.ui.component
 
+import com.shub39.grit.shared.ui.theme.LocalFloatingBarInset
+import com.shub39.grit.shared.ui.components.glass.GlassButtonStyle
+import com.shub39.grit.shared.ui.components.glass.GlassButton
+import com.shub39.grit.shared.ui.components.glass.GlassIconButton
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -124,7 +128,12 @@ fun CategoryUpsertSheet(
                 Modifier.fillMaxWidth()
                     .then(if (fullScreen) Modifier.weight(1f) else Modifier)
                     .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 16.dp),
+                    // Full screen, the form runs on beneath the floating nav bar.
+                    .padding(
+                        start = 16.dp,
+                        end = 16.dp,
+                        bottom = if (fullScreen) LocalFloatingBarInset.current else 0.dp,
+                    ),
         ) {
             if (!fullScreen) {
                 Box(
@@ -207,15 +216,11 @@ fun CategoryUpsertSheet(
                 },
             )
 
-            Button(
+            GlassButton(
                 onClick = {
                     onUpsertCategory(newCategory.copy(name = textFieldState.text.toString()))
                 },
-                shapes =
-                    ButtonShapes(
-                        shape = MaterialTheme.shapes.extraLarge,
-                        pressedShape = MaterialTheme.shapes.small,
-                    ),
+                style = GlassButtonStyle.Prominent,
                 modifier = Modifier.padding(bottom = 32.dp).fillMaxWidth(),
                 enabled = !saving && textFieldState.text.isNotBlank(),
             ) {
@@ -265,12 +270,13 @@ fun CategoryUpsertSheet(
                     )
                 },
                 navigationIcon = {
-                    FilledTonalIconButton(onClick = onDismiss, enabled = !saving) {
-                        Icon(
-                            imageVector = vectorResource(Res.drawable.nav_arrow_back),
-                            contentDescription = "Navigate Back",
-                        )
-                    }
+                    GlassIconButton(
+                        icon = vectorResource(Res.drawable.nav_arrow_back),
+                        contentDescription = "返回",
+                        onClick = onDismiss,
+                        enabled = !saving,
+                        modifier = Modifier.padding(horizontal = 8.dp),
+                    )
                 },
             )
             body()

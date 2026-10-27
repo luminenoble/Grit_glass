@@ -16,6 +16,12 @@
  */
 package com.shub39.grit.shared.ui.setting.ui.section
 
+import com.shub39.grit.shared.ui.theme.LocalFloatingBarInset
+import androidx.compose.foundation.layout.padding
+import grit.shared.ui.generated.resources.Res
+import grit.shared.ui.generated.resources.nav_arrow_back
+import org.jetbrains.compose.resources.vectorResource
+import com.shub39.grit.shared.ui.components.glass.GlassIconButton
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.*
@@ -41,9 +47,24 @@ fun LookAndFeelPage(
     Column {
         TopAppBar(
             title = { Text("外观") },
-            navigationIcon = { TextButton(onClick = onNavigateBack) { Text("返回") } },
+            navigationIcon = {
+                GlassIconButton(
+                    icon = vectorResource(Res.drawable.nav_arrow_back),
+                    contentDescription = "返回",
+                    onClick = onNavigateBack,
+                    modifier = Modifier.padding(horizontal = 8.dp),
+                )
+            },
         )
-        LazyColumn(contentPadding = PaddingValues(16.dp)) {
+        LazyColumn(
+            contentPadding =
+                PaddingValues(
+                    start = 16.dp,
+                    top = 16.dp,
+                    end = 16.dp,
+                    bottom = LocalFloatingBarInset.current + 16.dp,
+                )
+        ) {
             item {
                 ListItem(
                     headlineContent = { Text("降低透明度") },

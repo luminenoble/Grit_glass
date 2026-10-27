@@ -16,6 +16,9 @@
  */
 package com.shub39.grit.shared.ui.setting.ui.section
 
+import com.shub39.grit.shared.ui.theme.LocalFloatingBarInset
+import com.shub39.grit.shared.ui.components.glass.GlassButton
+import com.shub39.grit.shared.ui.components.glass.GlassIconButton
 import com.shub39.grit.shared.ui.components.glass.GlassAlertDialog
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -98,18 +101,25 @@ fun BackupPage(
                 Text(text = stringResource(Res.string.backup), fontFamily = flexFontEmphasis())
             },
             navigationIcon = {
-                FilledTonalIconButton(onClick = onNavigateBack) {
-                    Icon(
-                        imageVector = vectorResource(Res.drawable.nav_arrow_back),
-                        contentDescription = "Navigate Back",
-                    )
-                }
+                GlassIconButton(
+                    icon = vectorResource(Res.drawable.nav_arrow_back),
+                    contentDescription = "返回",
+                    onClick = onNavigateBack,
+                    modifier = Modifier.padding(horizontal = 8.dp),
+                )
             },
         )
 
         LazyColumn(
             modifier = Modifier.fillMaxWidth(),
-            contentPadding = PaddingValues(start = 12.dp, end = 12.dp, top = 16.dp, bottom = 60.dp),
+            // Runs on beneath the floating nav bar.
+            contentPadding =
+                PaddingValues(
+                    start = 12.dp,
+                    end = 12.dp,
+                    top = 16.dp,
+                    bottom = LocalFloatingBarInset.current + 24.dp,
+                ),
         ) {
             item {
                 Text("支持 Grit Glass 和 Grhinet 导出的 JSON 备份。备份包含类别、任务和 Section，不包含本机设置。", Modifier.padding(12.dp))
@@ -146,7 +156,7 @@ fun BackupPage(
                                     .background(listItemColors().containerColor)
                                     .padding(start = 52.dp, end = 16.dp, bottom = 8.dp)
                         ) {
-                            Button(
+                            GlassButton(
                                 onClick = { onAction(SettingsAction.OnExport) },
                                 enabled = state.backupState.exportState == ExportState.IDLE,
                                 modifier = Modifier.weight(1f),
@@ -192,7 +202,7 @@ fun BackupPage(
                                     .background(listItemColors().containerColor)
                                     .padding(start = 52.dp, end = 16.dp, bottom = 8.dp)
                         ) {
-                            Button(
+                            GlassButton(
                                 onClick = { onAction(SettingsAction.OnRestore) },
                                 enabled =
                                     state.backupState.restoreState == RestoreState.IDLE ||

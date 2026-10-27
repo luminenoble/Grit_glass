@@ -16,6 +16,9 @@
  */
 package com.shub39.grit.shared.ui.setting.ui.section
 
+import com.shub39.grit.shared.ui.theme.LocalFloatingBarInset
+import androidx.compose.foundation.layout.padding
+import com.shub39.grit.shared.ui.components.glass.GlassIconButton
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
@@ -67,12 +70,12 @@ fun Changelog(modifier: Modifier = Modifier, changelog: Changelog, onNavigateBac
                     )
                 },
                 navigationIcon = {
-                    FilledTonalIconButton(onClick = onNavigateBack) {
-                        Icon(
-                            imageVector = vectorResource(Res.drawable.nav_arrow_back),
-                            contentDescription = "Navigate Back",
-                        )
-                    }
+                    GlassIconButton(
+                        icon = vectorResource(Res.drawable.nav_arrow_back),
+                        contentDescription = "返回",
+                        onClick = onNavigateBack,
+                        modifier = Modifier.padding(horizontal = 8.dp),
+                    )
                 },
             )
         },
@@ -83,7 +86,7 @@ fun Changelog(modifier: Modifier = Modifier, changelog: Changelog, onNavigateBac
             contentPadding =
                 PaddingValues(
                     top = padding.calculateTopPadding() + 16.dp,
-                    bottom = padding.calculateBottomPadding() + 60.dp,
+                    bottom = maxOf(padding.calculateBottomPadding(), LocalFloatingBarInset.current) + 24.dp,
                     start = padding.calculateLeftPadding(LocalLayoutDirection.current) + 16.dp,
                     end = padding.calculateRightPadding(LocalLayoutDirection.current) + 16.dp,
                 ),

@@ -16,6 +16,7 @@
  */
 package com.shub39.grit.shared.ui.theme
 
+import androidx.compose.foundation.LocalIndication
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -58,6 +59,9 @@ fun GritTheme(theme: Theme = Theme(), content: @Composable () -> Unit) {
         CompositionLocalProvider(
             LocalGlassMode provides
                 if (theme.reduceTransparency) GlassMode.Reduced else GlassMode.Standard,
+            // Presses fill glass with light instead of laying a grey state layer over it.
+            LocalIndication provides GlassPressIndication,
+            LocalRippleConfiguration provides GlassRipple,
             content = content,
         )
     }

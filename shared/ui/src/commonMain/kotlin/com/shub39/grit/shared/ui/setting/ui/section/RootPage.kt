@@ -16,6 +16,7 @@
  */
 package com.shub39.grit.shared.ui.setting.ui.section
 
+import com.shub39.grit.shared.ui.theme.LocalFloatingBarInset
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.Arrangement
@@ -100,7 +101,14 @@ fun RootPage(
 
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(start = 12.dp, end = 12.dp, top = 16.dp, bottom = 60.dp),
+            // Runs on beneath the floating nav bar.
+            contentPadding =
+                PaddingValues(
+                    start = 12.dp,
+                    end = 12.dp,
+                    top = 16.dp,
+                    bottom = LocalFloatingBarInset.current + 24.dp,
+                ),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             // Grit Plus

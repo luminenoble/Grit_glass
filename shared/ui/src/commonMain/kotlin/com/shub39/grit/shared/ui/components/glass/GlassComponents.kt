@@ -16,6 +16,14 @@
  */
 package com.shub39.grit.shared.ui.components.glass
 
+import androidx.compose.animation.animateContentSize
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.material3.LocalTextStyle
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontWeight
+import com.shub39.grit.shared.ui.theme.GlassMetrics
+import com.shub39.grit.shared.ui.theme.GlassPressIndication
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
@@ -48,7 +56,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderState
 import androidx.compose.material3.Text
-import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
@@ -83,12 +90,21 @@ import org.jetbrains.compose.resources.vectorResource
 
 enum class GlassButtonStyle {
     Plain,
-    /** Tinted glass for the primary action. */
+    /** The primary action: a denser, brighter lens with a semibold label. Still see-through. */
     Prominent,
+    /** Clear glass with danger-coloured ink. */
     Danger,
 }
 
-/** Capsule button on [GlassTier.Thin] glass with a springy press. */
+/** Press feedback shared by every glass control: light from the finger and a slight swell. */
+@Composable
+private fun glassPressScale(interaction: MutableInteractionSource): Float {
+    val pressed by interaction.collectIsPressedAsState()
+    val scale by animateFloatAsState(if (pressed) 1.06f else 1f, GritMotion.pressSpring())
+    return scale
+}
+
+/** Capsule button on [GlassTier.Thin] glass, [GlassMetrics.Control] tall. */
 @Composable
 fun GlassButton(
     onClick: () -> Unit,
@@ -96,47 +112,174 @@ fun GlassButton(
     enabled: Boolean = true,
     style: GlassButtonStyle = GlassButtonStyle.Plain,
     backdrop: GlassBackdrop? = null,
-    contentPadding: PaddingValues = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+    contentPadding: PaddingValues = PaddingValues(horizontal = 18.dp),
     content: @Composable RowScope.() -> Unit,
 ) {
     val interaction = remember { MutableInteractionSource() }
-    val pressed by interaction.collectIsPressedAsState()
-    val scale by animateFloatAsState(if (pressed) 0.97f else 1f, GritMotion.pressSpring())
-    val tint =
-        when (style) {
-            GlassButtonStyle.Plain -> null
-            GlassButtonStyle.Prominent -> MaterialTheme.colorScheme.primary
-            GlassButtonStyle.Danger -> GlassTokens.Danger
-        }
+    val scale = glassPressScale(interaction)
+    val prominent = style == GlassButtonStyle.Prominent
     val ink =
-        when (style) {
-            GlassButtonStyle.Plain -> MaterialTheme.colorScheme.onSurface
-            GlassButtonStyle.Prominent -> MaterialTheme.colorScheme.onPrimary
-            GlassButtonStyle.Danger -> Color.White
-        }
+        if (style == GlassButtonStyle.Danger) GlassTokens.Danger
+        else MaterialTheme.colorScheme.onSurface
     Row(
         modifier
             .graphicsLayer {
                 scaleX = scale
                 scaleY = scale
             }
-            .glassSurface(GlassTier.Thin, GlassShapes.Capsule, backdrop, tint)
+            .glassSurface(
+                GlassTier.Thin,
+                GlassShapes.Capsule,
+                backdrop,
+                tint = if (prominent) GlassTokens.Raised else null,
+                tintAlpha = if (prominent) GlassTokens.RaisedAlpha else null,
+            )
+            .clip(GlassShapes.Capsule)
             .clickable(
                 interactionSource = interaction,
-                indication = ripple(),
+                indication = GlassPressIndication,
                 enabled = enabled,
                 role = Role.Button,
                 onClick = onClick,
             )
-            .heightIn(min = 40.dp)
+            .heightIn(min = GlassMetrics.Control)
             .padding(contentPadding),
-        horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally),
+        horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         CompositionLocalProvider(
             LocalContentColor provides ink.copy(alpha = if (enabled) 1f else 0.38f),
+            LocalTextStyle provides
+                MaterialTheme.typography.labelLarge.copy(
+                    fontWeight = if (prominent) FontWeight.SemiBold else FontWeight.Medium
+                ),
             content = { content() },
         )
+    }
+}
+
+/**
+ * Round icon button, [GlassMetrics.Control] across. On its own it is a clear glass lens; [inTray]
+ * leaves it bare inside a glass tray or bar, the way tray chips lie flat. With [checked] it is a
+ * toggle whose checked state is a raised lens.
+ */
+@Composable
+fun GlassIconButton(
+    icon: ImageVector,
+    contentDescription: String?,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    inTray: Boolean = false,
+    checked: Boolean? = null,
+    backdrop: GlassBackdrop? = null,
+    tint: Color = MaterialTheme.colorScheme.onSurface,
+) {
+    val interaction = remember { MutableInteractionSource() }
+    val scale = glassPressScale(interaction)
+    val raised = checked == true
+    Box(
+        modifier
+            .size(GlassMetrics.Control)
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+            }
+            .then(
+                when {
+                    raised ->
+                        Modifier.glassSurface(
+                            GlassTier.Thin,
+                            CircleShape,
+                            backdrop,
+                            tint = GlassTokens.Raised,
+                            tintAlpha = GlassTokens.RaisedAlpha,
+                        )
+                    inTray -> Modifier
+                    else -> Modifier.glassSurface(GlassTier.Thin, CircleShape, backdrop)
+                }
+            )
+            .clip(CircleShape)
+            .then(
+                if (checked != null)
+                    Modifier.toggleable(
+                        value = checked,
+                        interactionSource = interaction,
+                        indication = GlassPressIndication,
+                        enabled = enabled,
+                        role = Role.Switch,
+                        onValueChange = { onClick() },
+                    )
+                else
+                    Modifier.clickable(
+                        interactionSource = interaction,
+                        indication = GlassPressIndication,
+                        enabled = enabled,
+                        role = Role.Button,
+                        onClick = onClick,
+                    )
+            ),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            icon,
+            contentDescription,
+            Modifier.size(GlassMetrics.Icon),
+            tint = tint.copy(alpha = if (enabled) 1f else 0.38f),
+        )
+    }
+}
+
+/**
+ * The primary floating action: a clear glass lens [GlassMetrics.Primary] across that refracts the
+ * list sliding under it, widening into a capsule when [label] is shown.
+ */
+@Composable
+fun GlassFab(
+    icon: ImageVector,
+    contentDescription: String?,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    backdrop: GlassBackdrop? = null,
+    label: String? = null,
+) {
+    val interaction = remember { MutableInteractionSource() }
+    val scale = glassPressScale(interaction)
+    Row(
+        modifier
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+            }
+            .glassSurface(GlassTier.Thin, GlassShapes.Capsule, backdrop)
+            .clip(GlassShapes.Capsule)
+            .clickable(
+                interactionSource = interaction,
+                indication = GlassPressIndication,
+                role = Role.Button,
+                onClick = onClick,
+            )
+            .height(GlassMetrics.Primary)
+            .widthIn(min = GlassMetrics.Primary)
+            .animateContentSize(GritMotion.pressSpring())
+            .padding(horizontal = if (label != null) 20.dp else 0.dp),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            icon,
+            contentDescription,
+            Modifier.size(26.dp),
+            tint = MaterialTheme.colorScheme.onSurface,
+        )
+        if (label != null)
+            Text(
+                label,
+                Modifier.padding(start = 10.dp),
+                color = MaterialTheme.colorScheme.onSurface,
+                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
+                maxLines = 1,
+            )
     }
 }
 
@@ -165,7 +308,7 @@ fun GlassToolbarDivider(height: Dp = 24.dp) {
     )
 }
 
-/** Short status capsule, e.g. Rhine notices. Timing and placement stay with the caller. */
+/** Short status capsule. Timing and placement stay with the caller. */
 @Composable
 fun GlassToast(
     text: String,
@@ -223,9 +366,10 @@ fun <T> GlassSegmented(
                     .width(lensW)
                     .height(36.dp)
                     .glassSurface(
-                        GlassTier.Content,
+                        GlassTier.Thin,
                         GlassShapes.Capsule,
-                        tint = MaterialTheme.colorScheme.primaryContainer,
+                        tint = GlassTokens.Raised,
+                        tintAlpha = GlassTokens.RaisedAlpha,
                     )
             )
         Row(Modifier.selectableGroup()) {
@@ -233,8 +377,7 @@ fun <T> GlassSegmented(
                 val chosen = i == index
                 val ink by
                     animateColorAsState(
-                        if (chosen) MaterialTheme.colorScheme.onPrimaryContainer
-                        else MaterialTheme.colorScheme.onSurface
+                        if (chosen) MaterialTheme.colorScheme.onSurface else GlassTokens.SecondaryText
                     )
                 Box(
                     Modifier.onPlaced { bounds[i] = it.positionInParent().x to it.size.width.toFloat() }
@@ -272,7 +415,7 @@ fun GlassSwitch(
         animateDpAsState(if (checked) 22.dp else 2.dp, GritMotion.pressSpring())
     val track by
         animateColorAsState(
-            if (checked) MaterialTheme.colorScheme.primary else Color(0xFFDCD4C7)
+            if (checked) GlassTokens.Done else Color(0xFFDCD4C7)
         )
     Box(
         modifier
@@ -311,8 +454,7 @@ fun GlassSwitch(
                 vectorResource(if (checked) Res.drawable.check else Res.drawable.close),
                 contentDescription = null,
                 tint =
-                    if (checked) MaterialTheme.colorScheme.primary
-                    else MaterialTheme.colorScheme.onSurfaceVariant,
+                    if (checked) GlassTokens.Done else MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.size(16.dp),
             )
         }

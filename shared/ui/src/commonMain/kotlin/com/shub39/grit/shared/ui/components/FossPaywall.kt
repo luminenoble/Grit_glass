@@ -16,6 +16,8 @@
  */
 package com.shub39.grit.shared.ui.components
 
+import com.shub39.grit.shared.ui.components.glass.GlassButton
+import com.shub39.grit.shared.ui.theme.GlassMetrics
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -97,22 +99,13 @@ fun FossPaywall(modifier: Modifier = Modifier) {
                     )
                 }
 
-                FilledTonalButton(
-                    onClick = { uriHandler.openUri("https://buymeacoffee.com/shub39") },
-                    modifier = Modifier.height(ButtonDefaults.MediumContainerHeight),
-                ) {
+                GlassButton(onClick = { uriHandler.openUri("https://buymeacoffee.com/shub39") }) {
                     Icon(
                         imageVector = vectorResource(Res.drawable.buymeacoffee),
-                        contentDescription = "Buy me a coffee",
-                        modifier = Modifier.size(ButtonDefaults.MediumIconSize),
+                        contentDescription = null,
+                        modifier = Modifier.size(GlassMetrics.Icon),
                     )
-
-                    Spacer(modifier = Modifier.width(ButtonDefaults.IconSpacing))
-
-                    Text(
-                        text = stringResource(Res.string.bmc),
-                        style = ButtonDefaults.textStyleFor(ButtonDefaults.MediumContainerHeight),
-                    )
+                    Text(text = stringResource(Res.string.bmc))
                 }
             }
         }
