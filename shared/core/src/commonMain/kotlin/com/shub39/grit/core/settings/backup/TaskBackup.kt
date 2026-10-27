@@ -22,15 +22,15 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.*
 
 @Serializable
-data class RhineBackup(
+data class TaskBackup(
     val format: String,
     val formatVersion: Int,
     val exportedAt: Instant,
     val categories: List<Category>,
     val tasks: List<Task>,
 ) {
-    fun validated(): RhineBackup {
-        require(format == FORMAT && formatVersion == VERSION) { "只支持 Grit_Rhine 新格式版本 1" }
+    fun validated(): TaskBackup {
+        require(format == FORMAT && formatVersion == VERSION) { "只支持 Grit Glass / Grhinet 备份格式版本 1" }
         require(
             categories.all { it.id > 0 } &&
                 categories.map { it.id }.distinct().size == categories.size
@@ -73,7 +73,7 @@ data class RhineBackup(
             prettyPrint = true
         }
 
-        fun decode(text: String): RhineBackup {
+        fun decode(text: String): TaskBackup {
             val objectValue = json.parseToJsonElement(text).jsonObject
             fun required(o: JsonObject, keys: List<String>) {
                 require(keys.all { it in o }) { "备份缺少必要字段" }
@@ -109,7 +109,7 @@ data class RhineBackup(
                     )
                 }
             }
-            return json.decodeFromJsonElement<RhineBackup>(objectValue).validated()
+            return json.decodeFromJsonElement<TaskBackup>(objectValue).validated()
         }
     }
 }

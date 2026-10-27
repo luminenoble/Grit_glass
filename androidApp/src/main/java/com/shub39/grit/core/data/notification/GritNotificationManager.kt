@@ -32,13 +32,11 @@ import org.koin.core.annotation.Single
 @Single
 class GritNotificationManager(private val context: Context) {
     companion object {
-        const val CHANNEL = "grit_rhine_tasks"
+        const val CHANNEL = "grit_glass_tasks"
 
         fun createNotificationChannel(context: Context) {
             val manager =
                 context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            // Removing the old mixed channel also removes its delivered notifications.
-            manager.deleteNotificationChannel("1")
             manager.createNotificationChannel(
                 NotificationChannel(
                     CHANNEL,
@@ -61,7 +59,7 @@ class GritNotificationManager(private val context: Context) {
         val intent =
             Intent(context, GritIntentReceiver::class.java).apply {
                 action = IntentActions.MARK_TASK_DONE.action
-                data = Uri.parse("grit-rhine://complete/${task.id}")
+                data = Uri.parse("grit-glass://complete/${task.id}")
                 putExtra("task_id", task.id)
             }
         val action =

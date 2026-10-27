@@ -157,7 +157,7 @@ fun SectionEditor(
         ) {
             Box(
                 Modifier.fillMaxSize()
-                    .windowInsetsPadding(com.shub39.grit.shared.ui.rhine.rhineSafeDrawingInsets())
+                    .windowInsetsPadding(androidx.compose.foundation.layout.WindowInsets.safeDrawing)
                     .imePadding()
                     .padding(8.dp),
                 contentAlignment = androidx.compose.ui.Alignment.Center,

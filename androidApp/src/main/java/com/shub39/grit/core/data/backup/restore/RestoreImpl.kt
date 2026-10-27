@@ -32,10 +32,10 @@ class RestoreImpl(private val taskRepo: TaskRepo) : RestoreRepo {
         val file =
             FileKit.openFilePicker(mode = FileKitMode.Single, type = FileKitType.File("json"))
                 ?: return null
-        return withContext(Dispatchers.IO) { RestorePreview(RhineBackup.decode(file.readString())) }
+        return withContext(Dispatchers.IO) { RestorePreview(TaskBackup.decode(file.readString())) }
     }
 
-    override suspend fun restoreData(backup: RhineBackup): RestoreResult =
+    override suspend fun restoreData(backup: TaskBackup): RestoreResult =
         try {
             withContext(Dispatchers.IO) { taskRepo.replaceData(backup) }
             RestoreResult.Success

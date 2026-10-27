@@ -17,14 +17,14 @@
 package com.shub39.grit
 
 import com.shub39.grit.core.now
-import com.shub39.grit.core.settings.backup.RhineBackup
+import com.shub39.grit.core.settings.backup.TaskBackup
 import com.shub39.grit.core.tasks.*
 import kotlin.time.Instant
 import kotlinx.datetime.*
 import org.junit.Assert.*
 import org.junit.Test
 
-class RhineModelTest {
+class TaskModelTest {
     private val time = Instant.parse("2026-01-01T00:00:00Z")
 
     private fun backup(
@@ -33,8 +33,8 @@ class RhineModelTest {
                 Section(id = 3, title = "工作", completedOn = LocalDate(2026, 1, 1), createdAt = time)
             )
     ) =
-        RhineBackup(
-            RhineBackup.FORMAT,
+        TaskBackup(
+            TaskBackup.FORMAT,
             1,
             time,
             listOf(Category(id = 1, name = "学习", createdAt = time)),
@@ -72,8 +72,8 @@ class RhineModelTest {
     @Test
     fun backupRoundTripPreservesWorkDatesAndIdentity() {
         val original = backup()
-        val encoded = RhineBackup.json.encodeToString(original)
-        val decoded = RhineBackup.decode(encoded)
+        val encoded = TaskBackup.json.encodeToString(original)
+        val decoded = TaskBackup.decode(encoded)
         assertEquals(original.tasks.single().titleColor, decoded.tasks.single().titleColor)
         assertEquals(original.tasks.single().reminder, decoded.tasks.single().reminder)
         assertEquals(LocalDate(2026, 1, 1), decoded.tasks.single().sections.single().completedOn)
@@ -106,17 +106,17 @@ class RhineModelTest {
                     Section(id = 3, title = "工作", createdAt = time, titleColor = "#C0392B,#1E6FD9")
                 )
             )
-        val text = RhineBackup.json.encodeToString(coloured)
+        val text = TaskBackup.json.encodeToString(coloured)
         assertEquals(
             "#C0392B,#1E6FD9",
-            RhineBackup.decode(text).tasks.single().sections.single().titleColor,
+            TaskBackup.decode(text).tasks.single().sections.single().titleColor,
         )
         // Backups written before Sections had a colour carry no such field.
         val old = text.replace(Regex(",\\s*\"titleColor\": \"#C0392B,#1E6FD9\""), "")
         assertFalse(old.contains("#C0392B"))
-        assertNull(RhineBackup.decode(old).tasks.single().sections.single().titleColor)
+        assertNull(TaskBackup.decode(old).tasks.single().sections.single().titleColor)
         assertThrows(IllegalArgumentException::class.java) {
-            RhineBackup.decode(text.replace("#C0392B,#1E6FD9", "red"))
+            TaskBackup.decode(text.replace("#C0392B,#1E6FD9", "red"))
         }
     }
 
@@ -161,14 +161,14 @@ class RhineModelTest {
     @Test
     fun legacyFormatAndMissingRequiredFieldsAreRejected() {
         assertThrows(IllegalArgumentException::class.java) {
-            RhineBackup.decode("{\"tasks\":[],\"categories\":[],\"habits\":[]}")
+            TaskBackup.decode("{\"tasks\":[],\"categories\":[],\"habits\":[]}")
         }
-        val text = RhineBackup.json.encodeToString(backup())
+        val text = TaskBackup.json.encodeToString(backup())
         assertThrows(Exception::class.java) {
-            RhineBackup.decode(text.replace("\"formatVersion\": 1", "\"formatVersion\": 9"))
+            TaskBackup.decode(text.replace("\"formatVersion\": 1", "\"formatVersion\": 9"))
         }
         assertThrows(IllegalArgumentException::class.java) {
-            RhineBackup.decode(text.replace(Regex("\"completedOn\": \"2026-01-01\",?"), ""))
+            TaskBackup.decode(text.replace(Regex("\"completedOn\": \"2026-01-01\",?"), ""))
         }
     }
 

@@ -17,7 +17,6 @@
 package com.shub39.grit.shared.ui.task
 
 import com.shub39.grit.core.tasks.Category
-import com.shub39.grit.core.tasks.IllustrationChange
 import com.shub39.grit.core.tasks.Task
 
 sealed interface TaskAction {
@@ -25,7 +24,6 @@ sealed interface TaskAction {
 
     data class AddCategory(
         val category: Category,
-        val illustration: IllustrationChange = IllustrationChange.Keep,
         val onSaved: (() -> Unit)? = null,
     ) : TaskAction
 
@@ -45,7 +43,6 @@ sealed interface TaskAction {
 
     data class UpsertTask(
         val task: Task,
-        val illustration: IllustrationChange = IllustrationChange.Keep,
         val onSaved: (() -> Unit)? = null,
     ) : TaskAction
 }

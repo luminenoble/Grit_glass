@@ -18,10 +18,10 @@ package com.shub39.grit.core.settings.backup
 interface RestoreRepo {
     suspend fun prepareRestore(): RestorePreview?
 
-    suspend fun restoreData(backup: RhineBackup): RestoreResult
+    suspend fun restoreData(backup: TaskBackup): RestoreResult
 }
 
-data class RestorePreview(val backup: RhineBackup) {
+data class RestorePreview(val backup: TaskBackup) {
     val categoryCount: Int
         get() = backup.categories.size
 

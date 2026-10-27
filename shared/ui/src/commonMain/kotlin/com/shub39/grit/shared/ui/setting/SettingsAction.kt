@@ -21,9 +21,6 @@ import com.shub39.grit.core.settings.WidgetTextSize
 import com.shub39.grit.core.theme.Fonts
 
 sealed interface SettingsAction {
-    data class SaveRhineDisplay(val config: com.shub39.grit.core.settings.RhineDisplayConfig) :
-        SettingsAction
-
     data object OnResetBackupState : SettingsAction
 
     data object OnExport : SettingsAction

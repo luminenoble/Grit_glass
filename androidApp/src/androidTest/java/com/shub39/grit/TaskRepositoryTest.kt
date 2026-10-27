@@ -21,11 +21,10 @@ import androidx.room3.Room
 import androidx.test.core.app.ApplicationProvider
 import com.shub39.grit.core.data.notification.GritNotificationManager
 import com.shub39.grit.core.interfaces.AlarmScheduler
-import com.shub39.grit.core.settings.backup.RhineBackup
+import com.shub39.grit.core.settings.backup.TaskBackup
 import com.shub39.grit.core.tasks.*
 import com.shub39.grit.tasks.data.database.TaskDatabase
 import com.shub39.grit.tasks.data.repository.TasksRepository
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.LocalDate
 import org.junit.*
@@ -75,7 +74,11 @@ class TaskRepositoryTest {
                 )
             )
         val before = repo.getTaskById(taskId)!!
-        repo.moveSection(before.sections.last().id, 0)
+        repo.upsertTask(
+            before.copy(
+                sections = before.sections.reversed().mapIndexed { i, s -> s.copy(orderIndex = i) }
+            )
+        )
         val reordered = repo.getTaskById(taskId)!!
         assertEquals(before.sections.reversed().map { it.id }, reordered.sections.map { it.id })
         repo.upsertTask(reordered.copy(categoryId = b))
@@ -91,7 +94,7 @@ class TaskRepositoryTest {
     fun deletingAndMovingItemsKeepsOrdersContiguous() = runBlocking {
         val c = repo.upsertCategory(Category(name = "A"))
         val ids = (1..8).map { repo.upsertTask(Task(categoryId = c, title = "$it")) }
-        repo.moveTask(ids.last(), 1)
+        repo.reorderTasks(c, listOf(ids[0], ids[7]) + ids.subList(1, 7))
         assertEquals(
             listOf(ids[0], ids[7]) + ids.subList(1, 7),
             repo.getTasks().filter { it.categoryId == c }.map { it.id },
@@ -117,13 +120,8 @@ class TaskRepositoryTest {
             fail("Should reject")
         } catch (_: IllegalArgumentException) {}
         assertEquals(snapshot.tasks, repo.getTasks())
-        repo.replaceData(RhineBackup.decode(RhineBackup.json.encodeToString(snapshot)))
+        repo.replaceData(TaskBackup.decode(TaskBackup.json.encodeToString(snapshot)))
         assertEquals(snapshot.tasks, repo.getTasks())
-        assertEquals(1, repo.searchTasks("100%").size)
-        assertEquals(1, repo.getTaskSummariesFlow(c, 0, 10).first().size)
-        assertEquals(1, repo.getCategoryCountsFlow().first().single().count)
-        val taskId = snapshot.tasks.single().id
-        assertEquals(1, repo.getSectionSummariesFlow(taskId, 0, 10).first().size)
     }
 
     @Test

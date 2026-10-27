@@ -63,7 +63,7 @@ class RestoreRepoStub : RestoreRepo {
         null
 
     override suspend fun restoreData(
-        backup: com.shub39.grit.core.settings.backup.RhineBackup
+        backup: com.shub39.grit.core.settings.backup.TaskBackup
     ): RestoreResult = RestoreResult.Failure("Demo 不支持文件导入")
 }
 

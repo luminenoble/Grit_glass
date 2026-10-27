@@ -18,7 +18,7 @@ package com.shub39.grit.web_demo.stubs
 
 import com.shub39.grit.core.interfaces.*
 import com.shub39.grit.core.settings.*
-import com.shub39.grit.core.settings.backup.RhineBackup
+import com.shub39.grit.core.settings.backup.TaskBackup
 import com.shub39.grit.core.tasks.*
 import com.shub39.grit.core.theme.Fonts
 import kotlin.time.Clock
@@ -48,14 +48,6 @@ class ThemeDatastoreStub : ThemeDatastore {
 
 @Single(binds = [SettingsDatastore::class])
 class SettingsDatastoreStub : SettingsDatastore {
-    private val rhine = MutableStateFlow(com.shub39.grit.core.settings.RhineDisplayConfig())
-
-    override fun getRhineDisplay() = rhine.asStateFlow()
-
-    override suspend fun setRhineDisplay(config: com.shub39.grit.core.settings.RhineDisplayConfig) {
-        rhine.value = config.normalized()
-    }
-
     private val page = MutableStateFlow(Sections.Tasks)
     private val hours = MutableStateFlow(false)
     private val notifications = MutableStateFlow(false)
@@ -109,33 +101,8 @@ class SettingsDatastoreStub : SettingsDatastore {
 
 private data class DemoData(val categories: List<Category>, val tasks: List<Task>)
 
-/** In memory; the web demo has no gallery, so nothing is ever retained. */
-@Single(binds = [RhineIllustrationRepo::class])
-class RhineIllustrationRepoStub : RhineIllustrationRepo {
-    private val rows = MutableStateFlow(mapOf<Pair<IllustrationOwner, Long>, String>())
-
-    override fun illustrationsFlow(owner: IllustrationOwner, ids: Set<Long>) =
-        rows.map { all ->
-            all.filterKeys { it.first == owner && it.second in ids }.mapKeys { it.key.second }
-        }
-
-    override suspend fun illustration(owner: IllustrationOwner, id: Long) = rows.value[owner to id]
-
-    override suspend fun setIllustration(owner: IllustrationOwner, id: Long, uri: String?) {
-        rows.value = if (uri == null) rows.value - (owner to id) else rows.value + ((owner to id) to uri)
-    }
-
-    override suspend fun retain(uri: String) = false
-
-    override suspend fun releaseIfUnused(uri: String) {}
-}
-
 @Single(binds = [TaskRepo::class])
 class TaskRepoStub : TaskRepo {
-    private val generation = MutableStateFlow(0L)
-
-    override fun dataGeneration() = generation.map { it.toString() }
-
     private val data =
         MutableStateFlow(
             DemoData(
@@ -285,55 +252,6 @@ class TaskRepoStub : TaskRepo {
         }
     }
 
-    private fun moveScope(d: DemoData, kind: MoveKind, parentId: Long?): MoveScope {
-        val parent =
-            if (kind == MoveKind.Section) requireNotNull(d.tasks.firstOrNull { it.id == parentId })
-            else null
-        val ids =
-            when (kind) {
-                MoveKind.Category -> d.categories.sortedBy { it.orderIndex }.map { it.id }
-                MoveKind.Task -> {
-                    require(d.categories.any { it.id == parentId })
-                    d.tasks
-                        .filter { it.categoryId == parentId }
-                        .sortedBy { it.orderIndex }
-                        .map { it.id }
-                }
-                MoveKind.Section -> parent!!.sections.sortedBy { it.orderIndex }.map { it.id }
-            }
-        return MoveScope(kind, parentId, parent?.categoryId, ids, generation.value.toString())
-    }
-
-    override suspend fun readMoveScope(kind: MoveKind, parentId: Long?): MoveScope =
-        mutex.withLock { moveScope(data.value, kind, parentId) }
-
-    override suspend fun moveTask(id: Long, target: Int, expected: MoveScope?) = write { d ->
-        val task = requireNotNull(d.tasks.firstOrNull { it.id == id })
-        val current = moveScope(d, MoveKind.Task, task.categoryId)
-        expected?.validate(current)
-        val ids = movedIds(current.ids, id, target)
-        d.copy(
-            tasks =
-                d.tasks.map {
-                    if (it.categoryId == task.categoryId)
-                        it.copy(orderIndex = ids.indexOf(it.id), updatedAt = Clock.System.now())
-                    else it
-                }
-        ) to Unit
-    }
-
-    override suspend fun moveCategory(id: Long, target: Int, expected: MoveScope?) = write { d ->
-        val current = moveScope(d, MoveKind.Category, null)
-        expected?.validate(current)
-        val ids = movedIds(current.ids, id, target)
-        d.copy(
-            categories =
-                d.categories.map {
-                    it.copy(orderIndex = ids.indexOf(it.id), updatedAt = Clock.System.now())
-                }
-        ) to Unit
-    }
-
     override suspend fun upsertSection(section: Section): Long = write { d ->
         val task = requireNotNull(d.tasks.firstOrNull { it.id == section.taskId })
         val old = task.sections.firstOrNull { it.id == section.id }
@@ -376,136 +294,19 @@ class TaskRepoStub : TaskRepo {
         }
     }
 
-    override suspend fun moveSection(id: Long, target: Int, expected: MoveScope?) {
-        write { d ->
-            val task = requireNotNull(d.tasks.firstOrNull { t -> t.sections.any { it.id == id } })
-            expected?.validate(moveScope(d, MoveKind.Section, task.id))
-            val ids = movedIds(task.sections.sortedBy { it.orderIndex }.map { it.id }, id, target)
-            val updated =
-                task.copy(
-                    sections =
-                        task.sections
-                            .map { it.copy(orderIndex = ids.indexOf(it.id)) }
-                            .sortedBy { it.orderIndex },
-                    updatedAt = Clock.System.now(),
-                )
-            d.copy(tasks = d.tasks.map { if (it.id == task.id) updated else it }) to Unit
-        }
-    }
-
-    private fun window(offset: Int, limit: Int) {
-        require(offset >= 0 && limit in 1..500)
-    }
-
-    override fun getTaskSummariesFlow(
-        categoryId: Long,
-        offset: Int,
-        limit: Int,
-    ): Flow<List<TaskSummary>> {
-        window(offset, limit)
-        return data.map {
-            it.tasks
-                .filter { t -> t.categoryId == categoryId }
-                .sortedBy { t -> t.orderIndex }
-                .drop(offset)
-                .take(limit)
-                .map { t -> t.summary() }
-        }
-    }
-
-    override fun getSectionSummariesFlow(
-        taskId: Long,
-        offset: Int,
-        limit: Int,
-    ): Flow<List<SectionSummary>> {
-        window(offset, limit)
-        return data.map {
-            it.tasks
-                .firstOrNull { t -> t.id == taskId }
-                ?.sections
-                .orEmpty()
-                .drop(offset)
-                .take(limit)
-                .map { s -> s.summary() }
-        }
-    }
-
-    override fun getTaskSummaryFlow(id: Long) =
-        getTasksFlow().map { groups ->
-            groups.values.flatten().firstOrNull { it.id == id }?.summary()
-        }
-
-    override fun getSectionSummaryFlow(id: Long) =
-        data.map { d -> d.tasks.flatMap { it.sections }.firstOrNull { it.id == id }?.summary() }
-
-    override suspend fun getSectionById(id: Long) =
-        data.value.tasks.flatMap { it.sections }.firstOrNull { it.id == id }
-
-    override fun getCategoryCountsFlow() =
-        data.map { d ->
-            d.categories.map { c ->
-                CategoryTaskCount(
-                    c.id,
-                    d.tasks.count { it.categoryId == c.id },
-                    d.tasks.count { it.categoryId == c.id && it.isCompleted },
-                )
-            }
-        }
-
-    override fun getTaskCountsFlow(categoryId: Long) =
-        data.map { d ->
-            d.tasks
-                .filter { it.categoryId == categoryId }
-                .map {
-                    TaskSectionCount(
-                        it.id,
-                        it.sections.size,
-                        it.sections.count { s -> s.isCompleted },
-                    )
-                }
-        }
-
-    override suspend fun searchTasks(
-        query: String,
-        offset: Int,
-        limit: Int,
-    ): List<TaskSearchResult> {
-        window(offset, limit)
-        if (query.isBlank()) return emptyList()
-        val d = data.value
-        val cats = d.categories.associateBy { it.id }
-        return d.tasks
-            .filter { it.title.contains(query.trim(), ignoreCase = true) }
-            .sortedWith(
-                compareBy<Task> { cats.getValue(it.categoryId).orderIndex }.thenBy { it.orderIndex }
-            )
-            .drop(offset)
-            .take(limit)
-            .map {
-                TaskSearchResult(
-                    it.id,
-                    it.categoryId,
-                    it.title,
-                    it.orderIndex,
-                    cats.getValue(it.categoryId).name,
-                    it.isCompleted,
-                )
-            }
-    }
-
-    override suspend fun exportSnapshot(): RhineBackup =
+    override suspend fun exportSnapshot(): TaskBackup =
         mutex.withLock {
             val d = data.value
-            RhineBackup(
-                RhineBackup.FORMAT,
-                RhineBackup.VERSION,
+            TaskBackup(
+                TaskBackup.FORMAT,
+                TaskBackup.VERSION,
                 Clock.System.now(),
                 d.categories.sortedBy { it.orderIndex },
                 d.tasks,
             )
         }
 
-    override suspend fun replaceData(backup: RhineBackup) {
+    override suspend fun replaceData(backup: TaskBackup) {
         val valid = backup.validated()
         write {
             nextCategory = maxOf(nextCategory, (valid.categories.maxOfOrNull { it.id } ?: 0) + 1)
@@ -515,7 +316,6 @@ class TaskRepoStub : TaskRepo {
                     nextSection,
                     (valid.tasks.flatMap { it.sections }.maxOfOrNull { it.id } ?: 0) + 1,
                 )
-            generation.value += 1
             DemoData(valid.categories, valid.tasks) to Unit
         }
     }

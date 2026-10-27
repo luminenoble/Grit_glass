@@ -27,8 +27,6 @@ import org.jetbrains.compose.resources.StringResource
 
 @Serializable
 sealed interface AppSections : NavKey {
-    @Serializable data object RhinePages : AppSections
-
     @Serializable data object TaskPages : AppSections
 
     @Serializable data object SettingsPages : AppSections
@@ -38,17 +36,15 @@ sealed interface AppSections : NavKey {
             serializersModule = SerializersModule {
                 polymorphic(NavKey::class) {
                     subclass(TaskPages::class, TaskPages.serializer())
-                    subclass(RhinePages::class, RhinePages.serializer())
                     subclass(SettingsPages::class, SettingsPages.serializer())
                 }
             }
         }
 
-        val mainRoutes: List<AppSections> = listOf(TaskPages, SettingsPages, RhinePages)
+        val mainRoutes: List<AppSections> = listOf(TaskPages, SettingsPages)
 
         fun AppSections.toStringRes(): StringResource {
             return when (this) {
-                RhinePages -> Res.string.rhine
                 TaskPages -> Res.string.task_tab
                 SettingsPages -> Res.string.setting_tab
             }
@@ -56,7 +52,6 @@ sealed interface AppSections : NavKey {
 
         fun AppSections.toIconRes(): DrawableResource {
             return when (this) {
-                RhinePages -> Res.drawable.view_week
                 TaskPages -> Res.drawable.check_list
                 SettingsPages -> Res.drawable.settings
             }

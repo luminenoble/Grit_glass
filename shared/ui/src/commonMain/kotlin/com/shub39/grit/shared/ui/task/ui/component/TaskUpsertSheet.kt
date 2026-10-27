@@ -145,10 +145,6 @@ expect fun TaskUpsertSheet(
     onDraftChange: ((Task) -> Unit)? = null,
     /** Full screen only: no own background, for hosts that draw a glass panel behind. */
     transparent: Boolean = false,
-    /** Extra field shown first in the form (e.g. the illustration picker). */
-    extra: (@Composable () -> Unit)? = null,
-    /** The [extra] field holds unsaved changes. */
-    extraDirty: Boolean = false,
 )
 
 @Composable
@@ -172,12 +168,9 @@ fun TaskUpsertSheetContent(
     allowDraftChanges: Boolean = true,
     onDraftChange: ((Task) -> Unit)? = null,
     transparent: Boolean = false,
-    extra: (@Composable () -> Unit)? = null,
-    extraDirty: Boolean = false,
 ) {
     val originalTask = remember(task.id) { task }
-    // The draft is saved with the screen, so a recreated activity (e.g. a gallery app opened in
-    // another orientation) keeps it. Hosts that reuse this sheet for different objects must key it
+    // The draft is saved with the screen, so a recreated activity keeps it. Hosts that reuse this sheet for different objects must key it
     // by the editing session.
     var newTask by
         rememberSaveable(task.id, stateSaver = jsonSaver(Task.serializer())) {
@@ -211,7 +204,7 @@ fun TaskUpsertSheetContent(
             sections =
                 sectionItems.mapIndexed { index, item -> item.section.copy(orderIndex = index) },
         )
-    val dirty = draft != originalTask || extraDirty
+    val dirty = draft != originalTask
     LaunchedEffect(draft) { onDraftChange?.invoke(draft) }
     val requestClose: () -> Unit = {
         if (!saving) {
@@ -297,7 +290,6 @@ fun TaskUpsertSheetContent(
             verticalArrangement = Arrangement.spacedBy(8.dp),
             contentPadding = PaddingValues(horizontal = 16.dp),
         ) {
-            if (extra != null) item { extra() }
             item {
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
                     categories.forEach { category ->

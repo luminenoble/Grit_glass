@@ -74,7 +74,7 @@ import com.shub39.grit.shared.ui.components.glass.GlassButtonStyle
 import com.shub39.grit.shared.ui.components.glass.GlassSegmented
 import com.shub39.grit.shared.ui.theme.GlassTier
 import com.shub39.grit.shared.ui.theme.GlassTokens
-import com.shub39.grit.shared.ui.theme.RhineBaseColors
+import com.shub39.grit.shared.ui.theme.GritBaseColors
 import com.shub39.grit.shared.ui.theme.parseTitleColors
 import com.shub39.grit.shared.ui.theme.titleBrush
 import com.shub39.grit.shared.ui.theme.titleColorValue
@@ -312,7 +312,7 @@ private fun ColorPreview(colors: List<Color>) {
     Column(
         Modifier.fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
-            .background(RhineBaseColors.surface)
+            .background(GritBaseColors.surface)
             .border(0.5.dp, GlassTokens.Hairline, RoundedCornerShape(12.dp))
             .padding(horizontal = 12.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(6.dp),

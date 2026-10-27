@@ -74,7 +74,6 @@ import org.jetbrains.compose.resources.vectorResource
 fun RootPage(
     state: SettingsState,
     onAction: (SettingsAction) -> Unit,
-    onNavigateToRhineDisplay: () -> Unit = {},
     onNavigateToLookAndFeel: () -> Unit,
     onNavigateToBackup: () -> Unit,
     onNavigateToPaywall: () -> Unit,
@@ -104,15 +103,6 @@ fun RootPage(
             contentPadding = PaddingValues(start = 12.dp, end = 12.dp, top = 16.dp, bottom = 60.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            item {
-                ListItem(
-                    headlineContent = { Text("Rhine 显示") },
-                    supportingContent = { Text("字号、密度、块体与手机预览") },
-                    colors = glassListItemColors(),
-                    modifier =
-                        Modifier.glassItem(detachedItemShape()).clickable { onNavigateToRhineDisplay() },
-                )
-            }
             // Grit Plus
             item {
                 ListItem(
@@ -244,7 +234,6 @@ fun RootPage(
                                     when (page) {
                                         Sections.Tasks -> "Task"
                                         Sections.Settings -> "Setting"
-                                        Sections.Rhine -> "Rhine"
                                     }
                                 },
                                 modifier = Modifier.padding(top = 6.dp),

@@ -16,10 +16,6 @@
  */
 package com.shub39.grit.shared.ui.viewmodel
 
-import com.shub39.grit.core.tasks.IllustrationChange
-import com.shub39.grit.core.tasks.IllustrationOwner
-import com.shub39.grit.core.tasks.RhineIllustrationRepo
-import com.shub39.grit.core.tasks.apply
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.shub39.grit.core.interfaces.*
@@ -36,7 +32,6 @@ class TasksViewModel(
     @Provided private val repo: TaskRepo,
     @Provided private val scheduler: AlarmScheduler,
     @Provided private val datastore: SettingsDatastore,
-    @Provided private val illustrations: RhineIllustrationRepo?,
 ) : ViewModel() {
     private val writeLock = Mutex()
     private var pendingWrites = 0
@@ -45,8 +40,7 @@ class TasksViewModel(
 
     init {
         viewModelScope.launch {
-            // The Task page owns full bodies. Hidden pages must not keep re-querying them
-            // after Rhine mutations; the last UI snapshot remains available for returning drafts.
+            // Only query while the Task page is shown; the last snapshot stays for returning drafts.
             mutable.subscriptionCount
                 .map { it > 0 }
                 .distinctUntilChanged()
@@ -77,22 +71,6 @@ class TasksViewModel(
         viewModelScope.launch { repo.getTasks().forEach { scheduler.schedule(it) } }
     }
 
-    /** The object is saved already; a failed illustration write is reported, not rolled back. */
-    private suspend fun applyIllustration(
-        owner: IllustrationOwner,
-        id: Long,
-        change: IllustrationChange,
-    ) {
-        if (change == IllustrationChange.Keep) return
-        try {
-            illustrations?.apply(owner, id, change)
-        } catch (e: kotlinx.coroutines.CancellationException) {
-            throw e
-        } catch (_: Exception) {
-            mutable.update { it.copy(error = "已保存，插图未保存，请重试") }
-        }
-    }
-
     fun onAction(action: TaskAction) {
         if (action is TaskAction.ClearError) {
             mutable.update { it.copy(error = null) }
@@ -115,13 +93,11 @@ class TasksViewModel(
                 try {
                     when (action) {
                         is TaskAction.UpsertTask -> {
-                            val id = repo.upsertTask(action.task)
-                            applyIllustration(IllustrationOwner.Task, id, action.illustration)
+                            repo.upsertTask(action.task)
                             action.onSaved?.invoke()
                         }
                         is TaskAction.AddCategory -> {
                             val id = repo.upsertCategory(action.category)
-                            applyIllustration(IllustrationOwner.Category, id, action.illustration)
                             mutable.update {
                                 it.copy(
                                     currentCategory =

@@ -180,13 +180,6 @@ dependencies {
     implementation(libs.koin.annotations)
 }
 
-tasks.register<Copy>("copyRhineDebugApk") {
-    dependsOn("assembleFossDebug")
-    from(layout.buildDirectory.file("outputs/apk/foss/debug/androidApp-foss-debug.apk"))
-    into(layout.buildDirectory.dir("outputs/rrit_rhine"))
-    rename { "GritGlass-debug.apk" }
-}
-
 room3 { schemaDirectory("$projectDir/schemas") }
 
 tasks.register("generateChangelog") {

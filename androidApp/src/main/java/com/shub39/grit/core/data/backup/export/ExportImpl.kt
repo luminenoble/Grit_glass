@@ -17,7 +17,7 @@
 package com.shub39.grit.core.data.backup.export
 
 import com.shub39.grit.core.settings.backup.ExportRepo
-import com.shub39.grit.core.settings.backup.RhineBackup
+import com.shub39.grit.core.settings.backup.TaskBackup
 import com.shub39.grit.core.tasks.TaskRepo
 import io.github.vinceglb.filekit.FileKit
 import io.github.vinceglb.filekit.dialogs.openFileSaver
@@ -30,7 +30,7 @@ import org.koin.core.annotation.Single
 class ExportImpl(private val taskRepo: TaskRepo) : ExportRepo {
     override suspend fun exportToJson(): Boolean {
         val snapshot = taskRepo.exportSnapshot()
-        val text = withContext(Dispatchers.IO) { RhineBackup.json.encodeToString(snapshot) }
+        val text = withContext(Dispatchers.IO) { TaskBackup.json.encodeToString(snapshot) }
         val file =
             FileKit.openFileSaver(
                 suggestedName = "GritGlass-${snapshot.exportedAt.toString().replace(":", "")}",

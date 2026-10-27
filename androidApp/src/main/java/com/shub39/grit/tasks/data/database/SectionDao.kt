@@ -17,20 +17,10 @@
 package com.shub39.grit.tasks.data.database
 
 import androidx.room3.*
-import com.shub39.grit.core.tasks.*
 import kotlin.time.Instant
-import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface SectionDao {
-    @Query(
-        "SELECT id, taskId, title, orderIndex, completedOn, titleColor FROM sections WHERE id = :id"
-    )
-    suspend fun summaryById(id: Long): SectionSummary?
-
-    @Query("SELECT id FROM sections WHERE taskId = :parentId ORDER BY orderIndex")
-    suspend fun orderedIds(parentId: Long): List<Long>
-
     @Query("SELECT * FROM sections WHERE taskId = :taskId ORDER BY orderIndex")
     suspend fun getInTask(taskId: Long): List<SectionEntity>
 
@@ -42,19 +32,4 @@ interface SectionDao {
 
     @Query("UPDATE sections SET orderIndex = :position, updatedAt = :time WHERE id = :id")
     suspend fun setOrder(id: Long, position: Int, time: Instant)
-
-    @Query(
-        "SELECT id, taskId, title, orderIndex, completedOn, titleColor FROM sections WHERE taskId = :taskId ORDER BY orderIndex LIMIT :limit OFFSET :offset"
-    )
-    fun summaries(taskId: Long, offset: Int, limit: Int): Flow<List<SectionSummary>>
-
-    @Query(
-        "SELECT id, taskId, title, orderIndex, completedOn, titleColor FROM sections WHERE id = :id"
-    )
-    fun summary(id: Long): Flow<SectionSummary?>
-
-    @Query(
-        "SELECT t.id AS taskId, COUNT(s.id) AS count, SUM(CASE WHEN s.completedOn IS NOT NULL THEN 1 ELSE 0 END) AS completedCount FROM tasks t LEFT JOIN sections s ON t.id = s.taskId WHERE t.categoryId = :categoryId GROUP BY t.id ORDER BY t.orderIndex"
-    )
-    fun counts(categoryId: Long): Flow<List<TaskSectionCount>>
 }

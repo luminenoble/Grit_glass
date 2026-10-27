@@ -102,7 +102,6 @@
     <string name="pending">Pending</string>
     <string name="section_name">Section name</string>
     <string name="section_content">Section content</string>
-    <string name="rhine">Rhine</string>
     <string name="section_completed_on">Completion date (YYYY-MM-DD)</string>
     <string name="section_reorder">Reorder sections</string>
     <string name="section_reorder_done">Finish reordering</string>

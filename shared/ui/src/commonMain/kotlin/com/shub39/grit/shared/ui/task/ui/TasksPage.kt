@@ -16,11 +16,6 @@
  */
 package com.shub39.grit.shared.ui.task.ui
 
-import com.shub39.grit.core.tasks.IllustrationChange
-import com.shub39.grit.core.tasks.IllustrationOwner
-import com.shub39.grit.shared.ui.rhine.IllustrationField
-import com.shub39.grit.shared.ui.rhine.LocalRhineIllustrationRepo
-import com.shub39.grit.shared.ui.rhine.rememberIllustrationDraft
 import com.shub39.grit.shared.ui.components.glass.GlassAlertDialog
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
@@ -115,7 +110,6 @@ private val taskConfiguration = SavedStateConfiguration {
 
 @Composable
 fun TasksPage(state: TaskState, onAction: (TaskAction) -> Unit) {
-    val illustrationRepo = LocalRhineIllustrationRepo.current
     var showCategoryEditor by remember { mutableStateOf(false) }
     val backStack = rememberNavBackStack(taskConfiguration, TaskRoutes.List)
 
@@ -143,7 +137,6 @@ fun TasksPage(state: TaskState, onAction: (TaskAction) -> Unit) {
                             if (backStack.size != 1) backStack.removeLastOrNull()
                         }
                     } else {
-                        val illustration = rememberIllustrationDraft(IllustrationOwner.Task, 0L)
                         TaskUpsertSheet(
                             task =
                                 Task(
@@ -165,17 +158,12 @@ fun TasksPage(state: TaskState, onAction: (TaskAction) -> Unit) {
                             saving = state.saving,
                             onUpsert = { updated ->
                                 onAction(
-                                    TaskAction.UpsertTask(
-                                        updated,
-                                        illustration?.change ?: IllustrationChange.Keep,
-                                    ) {
+                                    TaskAction.UpsertTask(updated) {
                                         if (backStack.size != 1) backStack.removeLastOrNull()
                                     }
                                 )
                             },
                             onDelete = {},
-                            extra = illustration?.let { { IllustrationField(it, illustrationRepo) } },
-                            extraDirty = illustration?.change?.let { it != IllustrationChange.Keep } == true,
                         )
                     }
                 }
@@ -191,8 +179,6 @@ fun TasksPage(state: TaskState, onAction: (TaskAction) -> Unit) {
                             if (backStack.size != 1) backStack.removeLastOrNull()
                         }
                     } else {
-                        val illustration =
-                            rememberIllustrationDraft(IllustrationOwner.Category, category.id)
                         CategoryUpsertSheet(
                             isEditSheet = isEditing,
                             category = category,
@@ -202,15 +188,11 @@ fun TasksPage(state: TaskState, onAction: (TaskAction) -> Unit) {
                             saving = state.saving,
                             onUpsertCategory = {
                                 onAction(
-                                    TaskAction.AddCategory(
-                                        it,
-                                        illustration?.change ?: IllustrationChange.Keep,
-                                    ) {
+                                    TaskAction.AddCategory(it) {
                                         if (backStack.size != 1) backStack.removeLastOrNull()
                                     }
                                 )
                             },
-                            extra = illustration?.let { { IllustrationField(it, illustrationRepo) } },
                         )
                     }
                 }
@@ -223,7 +205,6 @@ fun TasksPage(state: TaskState, onAction: (TaskAction) -> Unit) {
                             if (backStack.size != 1) backStack.removeLastOrNull()
                         }
                     } else {
-                        val illustration = rememberIllustrationDraft(IllustrationOwner.Task, task.id)
                         TaskUpsertSheet(
                             task = task,
                             categories = state.tasks.keys.toList(),
@@ -238,16 +219,11 @@ fun TasksPage(state: TaskState, onAction: (TaskAction) -> Unit) {
                             saving = state.saving,
                             onUpsert = { updated ->
                                 onAction(
-                                    TaskAction.UpsertTask(
-                                        updated,
-                                        illustration?.change ?: IllustrationChange.Keep,
-                                    ) {
+                                    TaskAction.UpsertTask(updated) {
                                         if (backStack.size != 1) backStack.removeLastOrNull()
                                     }
                                 )
                             },
-                            extra = illustration?.let { { IllustrationField(it, illustrationRepo) } },
-                            extraDirty = illustration?.change?.let { it != IllustrationChange.Keep } == true,
                             onDelete = {
                                 onAction(
                                     TaskAction.DeleteTask(task) {

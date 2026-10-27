@@ -56,7 +56,6 @@ import com.shub39.grit.shared.ui.LocalWindowSizeClass
 import com.shub39.grit.shared.ui.app.AppSections.Companion.toIconRes
 import com.shub39.grit.shared.ui.app.AppSections.Companion.toStringRes
 import com.shub39.grit.shared.ui.navigation.fadeTransitionMetadata
-import com.shub39.grit.shared.ui.rhine.RhineScreen
 import com.shub39.grit.shared.ui.setting.ui.SettingsGraph
 import com.shub39.grit.shared.ui.task.ui.TasksPage
 import com.shub39.grit.shared.ui.theme.GlassTier
@@ -69,17 +68,6 @@ import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun MainApp(state: MainAppState, onNavigateToPaywall: () -> Unit) {
-    // One illustration store for Rhine and the Task page editors.
-    androidx.compose.runtime.CompositionLocalProvider(
-        com.shub39.grit.shared.ui.rhine.LocalRhineIllustrationRepo provides
-            org.koin.compose.koinInject<com.shub39.grit.core.tasks.RhineIllustrationRepo>()
-    ) {
-        MainAppContent(state, onNavigateToPaywall)
-    }
-}
-
-@Composable
-private fun MainAppContent(state: MainAppState, onNavigateToPaywall: () -> Unit) {
     val windowSizeClass = LocalWindowSizeClass.current
 
     val appBackStack =
@@ -88,34 +76,12 @@ private fun MainAppContent(state: MainAppState, onNavigateToPaywall: () -> Unit)
             when (state.startingSection) {
                 Tasks -> AppSections.TaskPages
                 Settings -> AppSections.SettingsPages
-                Rhine -> AppSections.RhinePages
             },
         )
 
     val navigate: (AppSections) -> Unit = { route ->
         appBackStack.removeAll { it == route }
         appBackStack.add(route)
-    }
-
-    val rhineStateHolder = androidx.compose.runtime.saveable.rememberSaveableStateHolder()
-
-    // Rhine is landscape-only and immersive; it replaces the navigation chrome entirely, so a
-    // landscape phone (no longer Compact) never shows the rail beside it.
-    if (appBackStack.last() == AppSections.RhinePages) {
-        val displayStore =
-            org.koin.compose.koinInject<com.shub39.grit.core.interfaces.SettingsDatastore>()
-        val display by
-            displayStore
-                .getRhineDisplay()
-                .collectAsState(initial = com.shub39.grit.core.settings.RhineDisplayConfig())
-        rhineStateHolder.SaveableStateProvider("rhine") {
-            RhineScreen(
-                display = display,
-                onOpenTasks = { navigate(AppSections.TaskPages) },
-                onOpenSettings = { navigate(AppSections.SettingsPages) },
-            )
-        }
-        return
     }
 
     when (windowSizeClass.widthSizeClass) {
@@ -141,8 +107,6 @@ private fun MainAppContent(state: MainAppState, onNavigateToPaywall: () -> Unit)
                     backStack = appBackStack,
                     entryProvider =
                         entryProvider {
-                            // Drawn above instead; kept so a back-stack peek never misses a key.
-                            entry<AppSections.RhinePages> {}
                             entry<AppSections.TaskPages>(metadata = fadeTransitionMetadata()) {
                                 val tvm: TasksViewModel = koinViewModel()
                                 val taskPageState by tvm.state.collectAsStateWithLifecycle()
@@ -187,8 +151,6 @@ private fun MainAppContent(state: MainAppState, onNavigateToPaywall: () -> Unit)
                     contentAlignment = Alignment.Center,
                     entryProvider =
                         entryProvider {
-                            // Drawn above instead; kept so a back-stack peek never misses a key.
-                            entry<AppSections.RhinePages> {}
                             entry<AppSections.TaskPages>(metadata = fadeTransitionMetadata()) {
                                 val tvm: TasksViewModel = koinViewModel()
                                 val taskPageState by tvm.state.collectAsStateWithLifecycle()

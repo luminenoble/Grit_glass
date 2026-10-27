@@ -21,10 +21,6 @@ import com.shub39.grit.core.settings.WidgetTextSize
 import kotlinx.coroutines.flow.Flow
 
 interface SettingsDatastore {
-    fun getRhineDisplay(): Flow<com.shub39.grit.core.settings.RhineDisplayConfig>
-
-    suspend fun setRhineDisplay(config: com.shub39.grit.core.settings.RhineDisplayConfig)
-
     fun getStartingSectionPref(): Flow<Sections>
 
     suspend fun setStartingPage(page: Sections)

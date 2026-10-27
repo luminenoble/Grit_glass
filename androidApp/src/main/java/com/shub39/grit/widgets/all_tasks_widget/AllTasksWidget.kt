@@ -79,7 +79,7 @@ import com.shub39.grit.core.tasks.Task
 import com.shub39.grit.core.tasks.TaskRepo
 import com.shub39.grit.core.tasks.titleColorStops
 import com.shub39.grit.shared.ui.theme.GlassTokens
-import com.shub39.grit.shared.ui.theme.RhineBaseColors
+import com.shub39.grit.shared.ui.theme.GritBaseColors
 import com.shub39.grit.shared.ui.theme.titleColor
 import com.shub39.grit.widgets.WidgetSize
 import com.shub39.grit.widgets.bodyFontSize
@@ -139,7 +139,7 @@ class AllTasksWidget : GlanceAppWidget(), KoinComponent {
                 }
 
             key(size) {
-                GlanceTheme(colors = ColorProviders(RhineBaseColors, RhineBaseColors)) {
+                GlanceTheme(colors = ColorProviders(GritBaseColors, GritBaseColors)) {
                     Content(
                         tasks = scopedTasks.filter { it.value.isNotEmpty() },
                         title = title,

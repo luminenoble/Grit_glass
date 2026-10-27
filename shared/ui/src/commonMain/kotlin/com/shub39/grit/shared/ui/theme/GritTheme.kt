@@ -23,7 +23,7 @@ import androidx.compose.ui.graphics.Color
 import com.shub39.grit.core.theme.Theme
 import com.shub39.grit.shared.ui.toFontRes
 
-val RhineBaseColors =
+val GritBaseColors =
     lightColorScheme(
         primary = Color(0xFF5B554B),
         onPrimary = Color(0xFFFFFBF4),
@@ -51,7 +51,7 @@ val RhineBaseColors =
 @Composable
 fun GritTheme(theme: Theme = Theme(), content: @Composable () -> Unit) {
     MaterialExpressiveTheme(
-        colorScheme = RhineBaseColors,
+        colorScheme = GritBaseColors,
         motionScheme = MotionScheme.expressive(),
         typography = provideTypography(theme.font.toFontRes()),
     ) {

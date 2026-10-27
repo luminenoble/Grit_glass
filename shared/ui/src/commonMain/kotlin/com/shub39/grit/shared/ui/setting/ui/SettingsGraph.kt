@@ -51,8 +51,6 @@ private sealed interface SettingsRoutes : NavKey {
 
     @Serializable data object LookAndFeel : SettingsRoutes
 
-    @Serializable data object RhineDisplay : SettingsRoutes
-
     @Serializable data object Backup : SettingsRoutes
 
     @Serializable data object Changelog : SettingsRoutes
@@ -65,7 +63,6 @@ private val configuration = SavedStateConfiguration {
         polymorphic(NavKey::class) {
             subclass(SettingsRoutes.Root::class, SettingsRoutes.Root.serializer())
             subclass(SettingsRoutes.LookAndFeel::class, SettingsRoutes.LookAndFeel.serializer())
-            subclass(SettingsRoutes.RhineDisplay::class, SettingsRoutes.RhineDisplay.serializer())
             subclass(SettingsRoutes.Backup::class, SettingsRoutes.Backup.serializer())
             subclass(SettingsRoutes.Changelog::class, SettingsRoutes.Changelog.serializer())
             subclass(SettingsRoutes.About::class, SettingsRoutes.About.serializer())
@@ -86,11 +83,7 @@ fun SettingsGraph(
 
         NavDisplay(
             modifier =
-                Modifier.widthIn(
-                        max =
-                            if (backStack.last() == SettingsRoutes.RhineDisplay) 1200.dp else 600.dp
-                    )
-                    .fillMaxSize(),
+                Modifier.widthIn(max = 600.dp).fillMaxSize(),
             backStack = backStack,
             entryProvider =
                 entryProvider {
@@ -98,9 +91,6 @@ fun SettingsGraph(
                         RootPage(
                             state = state,
                             onAction = onAction,
-                            onNavigateToRhineDisplay = {
-                                backStack.add(SettingsRoutes.RhineDisplay)
-                            },
                             onNavigateToLookAndFeel = { backStack.add(SettingsRoutes.LookAndFeel) },
                             onNavigateToBackup = { backStack.add(SettingsRoutes.Backup) },
                             onNavigateToPaywall = onNavigateToPaywall,
@@ -117,19 +107,6 @@ fun SettingsGraph(
                             onNavigateToPaywall = onNavigateToPaywall,
                             onNavigateBack = {
                                 if (backStack.size != 1) backStack.removeLastOrNull()
-                            },
-                        )
-                    }
-
-                    entry<SettingsRoutes.RhineDisplay>(metadata = horizontalTransitionMetadata()) {
-                        com.shub39.grit.shared.ui.setting.ui.section.RhineDisplayPage(
-                            saved = state.rhineDisplay,
-                            saving = state.rhineSaving,
-                            message = state.rhineMessage,
-                            onSave = { onAction(SettingsAction.SaveRhineDisplay(it)) },
-                            onBack = {
-                                if (!state.rhineSaving && backStack.size != 1)
-                                    backStack.removeLastOrNull()
                             },
                         )
                     }

@@ -120,7 +120,7 @@ object GlassTokens {
             GlassTier.Thick ->
                 GlassSpec(ThickTint, 0.90f, 0.96f, 40.dp, 0.16f, 0.60f, 0.08f, 16.dp, 0.14f)
             GlassTier.Content ->
-                GlassSpec(RhineBaseColors.surface, 1f, 1f, 0.dp, 0.10f, 0.55f, 0.06f, 3.dp, 0.08f)
+                GlassSpec(GritBaseColors.surface, 1f, 1f, 0.dp, 0.10f, 0.55f, 0.06f, 3.dp, 0.08f)
         }
 }
 

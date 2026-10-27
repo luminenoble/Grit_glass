@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <full-backup-content>
-    <include domain="database" path="grit_rhine_database" />
+    <include domain="database" path="grit_glass_database" />
     <include domain="file" path="datastore/" />
 </full-backup-content>

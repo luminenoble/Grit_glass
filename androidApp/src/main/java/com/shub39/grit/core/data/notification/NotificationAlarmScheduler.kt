@@ -40,7 +40,7 @@ class NotificationAlarmScheduler(private val context: Context) : AlarmScheduler 
             0,
             Intent(context, GritIntentReceiver::class.java).apply {
                 action = IntentActions.TASK_NOTIFICATION.action
-                data = Uri.parse("grit-rhine://task/${task.id}")
+                data = Uri.parse("grit-glass://task/${task.id}")
                 putExtra("task_id", task.id)
             },
             flags or PendingIntent.FLAG_IMMUTABLE,

@@ -16,13 +16,10 @@
  */
 package com.shub39.grit.core.tasks
 
-import com.shub39.grit.core.settings.backup.RhineBackup
+import com.shub39.grit.core.settings.backup.TaskBackup
 import kotlinx.coroutines.flow.Flow
 
 interface TaskRepo {
-    /** Changes after full replacement, even when IDs are reused. Retained while UI is absent. */
-    fun dataGeneration(): Flow<String> = kotlinx.coroutines.flow.flowOf("static")
-
     fun getCategoriesFlow(): Flow<List<Category>>
 
     fun getTasksFlow(): Flow<Map<Category, List<Task>>>
@@ -53,35 +50,11 @@ interface TaskRepo {
 
     suspend fun reorderCategories(ids: List<Long>)
 
-    suspend fun readMoveScope(kind: MoveKind, parentId: Long?): MoveScope
-
-    suspend fun moveTask(id: Long, target: Int, expected: MoveScope? = null)
-
-    suspend fun moveCategory(id: Long, target: Int, expected: MoveScope? = null)
-
-    suspend fun moveSection(id: Long, target: Int, expected: MoveScope? = null)
-
     suspend fun upsertSection(section: Section): Long
 
     suspend fun deleteSection(id: Long)
 
-    fun getTaskSummariesFlow(categoryId: Long, offset: Int, limit: Int): Flow<List<TaskSummary>>
+    suspend fun exportSnapshot(): TaskBackup
 
-    fun getSectionSummariesFlow(taskId: Long, offset: Int, limit: Int): Flow<List<SectionSummary>>
-
-    fun getTaskSummaryFlow(id: Long): Flow<TaskSummary?>
-
-    fun getSectionSummaryFlow(id: Long): Flow<SectionSummary?>
-
-    suspend fun getSectionById(id: Long): Section?
-
-    fun getCategoryCountsFlow(): Flow<List<CategoryTaskCount>>
-
-    fun getTaskCountsFlow(categoryId: Long): Flow<List<TaskSectionCount>>
-
-    suspend fun searchTasks(query: String, offset: Int = 0, limit: Int = 50): List<TaskSearchResult>
-
-    suspend fun exportSnapshot(): RhineBackup
-
-    suspend fun replaceData(backup: RhineBackup)
+    suspend fun replaceData(backup: TaskBackup)
 }

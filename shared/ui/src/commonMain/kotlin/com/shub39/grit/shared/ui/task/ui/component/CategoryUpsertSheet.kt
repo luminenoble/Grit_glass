@@ -90,8 +90,6 @@ fun CategoryUpsertSheet(
     onDraftChange: ((Category) -> Unit)? = null,
     /** Full screen only: no own background, for hosts that draw a glass panel behind. */
     transparent: Boolean = false,
-    /** Extra field shown first in the form (e.g. the illustration picker). */
-    extra: (@Composable () -> Unit)? = null,
 ) {
     // Saveable like the name field below, so a recreated activity keeps the whole draft. Hosts that
     // reuse this sheet for different objects must key it by the editing session.
@@ -128,7 +126,6 @@ fun CategoryUpsertSheet(
                     .verticalScroll(rememberScrollState())
                     .padding(horizontal = 16.dp),
         ) {
-            extra?.invoke()
             if (!fullScreen) {
                 Box(
                     contentAlignment = Alignment.Center,

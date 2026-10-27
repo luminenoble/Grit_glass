@@ -34,11 +34,11 @@ fun Color.toHexString(): String =
 fun titleColorValue(colors: List<Color>): String = colors.joinToString(",") { it.toHexString() }
 
 /** Selected text colour exactly as chosen (no contrast adjustment); a gradient's first stop. */
-fun titleColor(value: String?, default: Color = RhineBaseColors.onSurface): Color =
+fun titleColor(value: String?, default: Color = GritBaseColors.onSurface): Color =
     parseAccentColor(value) ?: default
 
 /** Left-to-right brush for the stored colour; a solid colour for one stop or none. */
-fun titleBrush(value: String?, default: Color = RhineBaseColors.onSurface): Brush {
+fun titleBrush(value: String?, default: Color = GritBaseColors.onSurface): Brush {
     val colors = parseTitleColors(value) ?: return SolidColor(default)
     return if (colors.size == 1) SolidColor(colors[0]) else Brush.horizontalGradient(colors)
 }
@@ -49,7 +49,7 @@ fun titleBrush(value: String?, default: Color = RhineBaseColors.onSurface): Brus
  */
 fun TextStyle.withTitleColor(
     value: String?,
-    default: Color = RhineBaseColors.onSurface,
+    default: Color = GritBaseColors.onSurface,
     alpha: Float = 1f,
 ): TextStyle {
     val colors = parseTitleColors(value)

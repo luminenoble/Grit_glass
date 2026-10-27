@@ -16,43 +16,6 @@
  */
 package com.shub39.grit.core.tasks
 
-import kotlinx.datetime.LocalDate
-
-data class TaskSummary(
-    val id: Long,
-    val categoryId: Long,
-    val title: String,
-    val orderIndex: Int,
-    val titleColor: String?,
-    val isCompleted: Boolean,
-)
-
-data class SectionSummary(
-    val id: Long,
-    val taskId: Long,
-    val title: String,
-    val orderIndex: Int,
-    val completedOn: LocalDate?,
-    val titleColor: String? = null,
-)
-
-data class CategoryTaskCount(val categoryId: Long, val count: Int, val completedCount: Int = 0)
-
-data class TaskSectionCount(val taskId: Long, val count: Int, val completedCount: Int = 0)
-
-data class TaskSearchResult(
-    val id: Long,
-    val categoryId: Long,
-    val title: String,
-    val orderIndex: Int,
-    val categoryName: String,
-    val isCompleted: Boolean,
-)
-
-fun Task.summary() = TaskSummary(id, categoryId, title, orderIndex, titleColor, isCompleted)
-
-fun Section.summary() = SectionSummary(id, taskId, title, orderIndex, completedOn, titleColor)
-
 /** Most colours one gradient title may blend. */
 const val MaxTitleColorStops = 5
 

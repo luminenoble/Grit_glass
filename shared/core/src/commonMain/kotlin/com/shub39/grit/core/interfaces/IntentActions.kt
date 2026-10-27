@@ -16,6 +16,6 @@
  */
 package com.shub39.grit.core.interfaces
 enum class IntentActions(val action: String) {
-    TASK_NOTIFICATION("rhine_task_notification"),
-    MARK_TASK_DONE("rhine_mark_task_done"),
+    TASK_NOTIFICATION("grit_glass_task_notification"),
+    MARK_TASK_DONE("grit_glass_mark_task_done"),
 }
