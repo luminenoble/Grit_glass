@@ -158,7 +158,7 @@ fun TaskList(
         )
 
         if (state.tasks.isEmpty()) {
-            Text("请新增类别，或从设置导入 Grhinet 新格式备份。旧版数据需先在应用外转换。", Modifier.padding(16.dp))
+            Text("新增一个类别开始记录，或在设置中导入 Grit Glass / Grhinet 的备份。", Modifier.padding(16.dp))
         }
 
         CategorySelector(

@@ -17,7 +17,7 @@
 package com.shub39.grit.shared.ui.update
 
 /** GitHub repository the update check reads releases from. */
-const val UPDATE_REPO = "luminenoble/Grit"
+const val UPDATE_REPO = "luminenoble/Grit_glass"
 
 /** Releases page opened when the user wants to download a newer build. */
 const val LATEST_RELEASE_URL = "https://github.com/$UPDATE_REPO/releases/latest"

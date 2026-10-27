@@ -25,16 +25,16 @@ plugins {
     alias(libs.plugins.koin.compiler)
 }
 
-val appName = "Grhinet"
-val appVersionCode = 6240
-val appVersionName = "6.2.4"
+val appName = "Grit Glass"
+val appVersionCode = 1000
+val appVersionName = "1.0.0"
 
 android {
     namespace = "com.shub39.grit"
     compileSdk = libs.versions.compileSdk.get().toInt()
 
     defaultConfig {
-        applicationId = "com.shub39.grit"
+        applicationId = "io.github.luminenoble.gritglass"
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
         versionCode = appVersionCode
@@ -184,7 +184,7 @@ tasks.register<Copy>("copyRhineDebugApk") {
     dependsOn("assembleFossDebug")
     from(layout.buildDirectory.file("outputs/apk/foss/debug/androidApp-foss-debug.apk"))
     into(layout.buildDirectory.dir("outputs/rrit_rhine"))
-    rename { "Grhinet-debug.apk" }
+    rename { "GritGlass-debug.apk" }
 }
 
 room3 { schemaDirectory("$projectDir/schemas") }

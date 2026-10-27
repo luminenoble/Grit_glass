@@ -112,7 +112,7 @@ fun BackupPage(
             contentPadding = PaddingValues(start = 12.dp, end = 12.dp, top = 16.dp, bottom = 60.dp),
         ) {
             item {
-                Text("只支持 Grhinet 新格式 JSON。备份包含类别、任务和 Section，不包含本机显示设置。", Modifier.padding(12.dp))
+                Text("支持 Grit Glass 和 Grhinet 导出的 JSON 备份。备份包含类别、任务和 Section，不包含本机设置。", Modifier.padding(12.dp))
             }
             state.backupMessage?.let { message ->
                 item {

@@ -67,17 +67,17 @@ class GritApplication : Application(), KoinComponent {
                     try {
                         scheduler.schedule(task)
                     } catch (e: Exception) {
-                        Log.e("Grhinet", "任务提醒调度失败", e)
+                        Log.e("GritGlass", "任务提醒调度失败", e)
                     }
                 }
                 WidgetUpdates.tasks(this@GritApplication)
             } catch (e: Exception) {
-                Log.e("Grhinet", "启动刷新失败", e)
+                Log.e("GritGlass", "启动刷新失败", e)
             }
             try {
                 get<RhineIllustrationRepository>().reconcile()
             } catch (e: Exception) {
-                Log.e("Grhinet", "插图授权对账失败", e)
+                Log.e("GritGlass", "插图授权对账失败", e)
             }
         }
 

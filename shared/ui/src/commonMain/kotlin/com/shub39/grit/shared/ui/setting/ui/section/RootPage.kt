@@ -339,7 +339,7 @@ fun RootPage(
                             )
                         },
                         supportingContent = {
-                            Text(text = "Grhinet ${appVersion.ifBlank { "x.x.x" }}")
+                            Text(text = "Grit Glass ${appVersion.ifBlank { "x.x.x" }}")
                         },
                         trailingContent = {
                             Icon(
