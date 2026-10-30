@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.1
+
+- Tasks widget: each task shows only its title; the step count is gone, and a task without steps no longer shows another task's step line
+- Tasks widget: task text always uses the text size chosen in the app, without jumping to another size when the list redraws
+
 ## 1.0.0
 
 - First release of Grit Glass: the Grhinet to-do app without the Rhine view and task pictures; it installs alongside Grhinet and imports Grhinet backups

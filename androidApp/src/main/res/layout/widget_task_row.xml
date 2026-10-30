@@ -1,26 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  One task row of the tasks widget: glass background, title and step count. The title's colours
-  arrive as per-glyph spans (WidgetTitleGradient); paddings and sizes are set from the widget's
-  text size setting.
+  One task row of the tasks widget: the title on its glass background, nothing else. The title's
+  colours arrive as per-glyph spans (WidgetTitleGradient); background, padding and text size are
+  set on every bind from the widget's text size setting, because the launcher reuses row views.
 -->
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/widget_task_row"
+<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_task_title"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical">
-
-    <TextView
-        android:id="@+id/widget_task_title"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:ellipsize="end"
-        android:maxLines="2" />
-
-    <TextView
-        android:id="@+id/widget_task_steps"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:maxLines="1"
-        android:visibility="gone" />
-</LinearLayout>
+    android:ellipsize="end"
+    android:maxLines="2" />

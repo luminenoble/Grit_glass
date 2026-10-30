@@ -26,8 +26,8 @@ plugins {
 }
 
 val appName = "Grit Glass"
-val appVersionCode = 1000
-val appVersionName = "1.0.0"
+val appVersionCode = 1010
+val appVersionName = "1.0.1"
 
 android {
     namespace = "com.shub39.grit"

@@ -45,10 +45,6 @@ val WidgetTextSize.bodyFontSize: TextUnit
             WidgetTextSize.LARGE -> 17.sp
         }
 
-/** Text size of a list item's secondary line, e.g. a description or step count. */
-val WidgetTextSize.captionFontSize: TextUnit
-    get() = bodyFontSize * 0.8f
-
 /** Padding around item text; smaller text tightens it so small widgets fit more rows. */
 val WidgetTextSize.itemPadding: Dp
     get() =

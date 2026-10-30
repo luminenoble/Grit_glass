@@ -21,7 +21,6 @@ import android.graphics.Paint
 import android.os.Build
 import android.text.TextPaint
 import android.util.TypedValue
-import android.view.View
 import android.widget.RemoteViews
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -83,7 +82,6 @@ import com.shub39.grit.shared.ui.theme.GritBaseColors
 import com.shub39.grit.shared.ui.theme.titleColor
 import com.shub39.grit.widgets.WidgetSize
 import com.shub39.grit.widgets.bodyFontSize
-import com.shub39.grit.widgets.captionFontSize
 import com.shub39.grit.widgets.gradientTitle
 import com.shub39.grit.widgets.itemPadding
 import com.shub39.grit.widgets.itemSpacing
@@ -205,18 +203,26 @@ class AllTasksWidget : GlanceAppWidget(), KoinComponent {
                     )
             )
 
+        val textSize = get<SettingsDatastore>().getWidgetTextSizeFlow().first()
+
         provideContent {
-            Content(tasks = previewItems, onUpdateTaskStatus = {}, onUpdateWidget = {})
+            Content(
+                tasks = previewItems,
+                textSize = textSize,
+                onUpdateTaskStatus = {},
+                onUpdateWidget = {},
+            )
         }
     }
 }
 
 /**
- * One task row (docs/项目概览.md §5): glass background, the title in its stored colour (gradients
- * included) and the step count, all in one layout of our own. Glance text takes no gradient brush,
+ * One task row (docs/项目概览.md §5): the title in its stored colour (gradients included) on the
+ * glass background, in one layout of our own; no step count. Glance text takes no gradient brush,
  * so the title is a TextView whose glyphs each carry their share of it; and Glance misplaces a
- * RemoteViews nested inside its own background container, losing the row's other children, so the
- * whole row is ours.
+ * RemoteViews nested inside its own background container, so the whole row is ours. The launcher
+ * reuses row views between tasks, so every property is set on every bind, never only for some
+ * tasks.
  */
 @Composable
 @GlanceComposable
@@ -230,51 +236,29 @@ private fun TaskRow(
     val metrics = context.resources.displayMetrics
     fun px(dp: Dp) = (dp.value * metrics.density).roundToInt()
     val pad = textSize.itemPadding
+    val vertical = px(textSize.itemSpacing + pad)
     val titleSp = textSize.bodyFontSize.value
     val stops = titleColorStops(task.titleColor)?.map { it or 0xFF000000.toInt() }
     val paint =
         TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
             this.textSize = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, titleSp, metrics)
         }
-    val steps = task.sections.size
-    val titlePad = if (steps == 0) pad else pad / 2
     val views =
         RemoteViews(context.packageName, R.layout.widget_task_row).apply {
             setInt(
-                R.id.widget_task_row,
+                R.id.widget_task_title,
                 "setBackgroundResource",
                 if (task.isCompleted) R.drawable.widget_glass_item_done
                 else R.drawable.widget_glass_item,
             )
-            setViewPadding(
-                R.id.widget_task_row,
-                px(pad),
-                px(textSize.itemSpacing),
-                px(pad),
-                px(textSize.itemSpacing),
-            )
-            setViewPadding(R.id.widget_task_title, px(pad), px(titlePad), px(pad), px(titlePad))
+            // Twice the item padding on each side: the width Content lays the gradient out in.
+            setViewPadding(R.id.widget_task_title, px(pad * 2), vertical, px(pad * 2), vertical)
             setTextViewTextSize(R.id.widget_task_title, TypedValue.COMPLEX_UNIT_SP, titleSp)
             setTextColor(R.id.widget_task_title, stops?.first() ?: titleColor(null).toArgb())
             setTextViewText(
                 R.id.widget_task_title,
                 gradientTitle(task.title, stops.orEmpty(), paint, px(titleWidth)),
             )
-            // Step progress, e.g. "2/5 sections".
-            if (steps > 0) {
-                setViewVisibility(R.id.widget_task_steps, View.VISIBLE)
-                setViewPadding(R.id.widget_task_steps, px(pad), 0, px(pad), px(pad / 2))
-                setTextViewTextSize(
-                    R.id.widget_task_steps,
-                    TypedValue.COMPLEX_UNIT_SP,
-                    textSize.captionFontSize.value,
-                )
-                setTextColor(R.id.widget_task_steps, GlassTokens.SecondaryText.toArgb())
-                setTextViewText(
-                    R.id.widget_task_steps,
-                    "${task.sections.count { it.isCompleted }}/$steps sections",
-                )
-            }
         }
     AndroidRemoteViews(views, modifier)
 }
@@ -285,8 +269,8 @@ private fun Content(
     tasks: Map<Category, List<Task>>,
     onUpdateTaskStatus: (Task) -> Unit,
     onUpdateWidget: () -> Unit,
+    textSize: WidgetTextSize,
     modifier: GlanceModifier = GlanceModifier,
-    textSize: WidgetTextSize = WidgetTextSize.MEDIUM,
     title: String = "Tasks",
     onCycleScope: (() -> Unit)? = null,
 ) {
@@ -360,7 +344,7 @@ private fun Content(
                             TaskRow(
                                 task = task,
                                 textSize = textSize,
-                                // List, row and title paddings on both sides.
+                                // List padding, then the row's padding, on both sides.
                                 titleWidth = size.width - 16.dp - taskTextPadding * 4,
                                 modifier =
                                     GlanceModifier.fillMaxWidth().clickable {
@@ -402,6 +386,7 @@ private fun GlancePreview() {
                         )
                     }
             },
+        textSize = WidgetTextSize.MEDIUM,
         onUpdateTaskStatus = {},
         onUpdateWidget = {},
     )
