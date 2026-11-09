@@ -44,6 +44,7 @@ fun TaskCard(
     task: Task,
     dragState: Boolean = false,
     reorderIcon: @Composable () -> Unit,
+    completeState: Boolean = false,
     is24Hr: Boolean,
     modifier: Modifier = Modifier,
     shape: Shape = RoundedCornerShape(12.dp),
@@ -93,7 +94,8 @@ fun TaskCard(
                                     )
                         )
                     }
-                    if (done)
+                    // While the completion switch is on, the trailing mark shows the state instead.
+                    if (done && !completeState)
                         Icon(
                             vectorResource(Res.drawable.check_circle),
                             "已完成",
@@ -160,6 +162,15 @@ fun TaskCard(
                 }
             }
             AnimatedVisibility(dragState) { reorderIcon() }
+            // Shown only while the completion switch is on, when a tap on the card toggles it.
+            AnimatedVisibility(completeState) {
+                Icon(
+                    vectorResource(if (done) Res.drawable.check_circle else Res.drawable.circle_border),
+                    if (done) "已完成，点按取消完成" else "未完成，点按标记完成",
+                    Modifier.padding(start = 8.dp).size(24.dp),
+                    tint = if (done) GlassTokens.Done else MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
         }
     }
 }

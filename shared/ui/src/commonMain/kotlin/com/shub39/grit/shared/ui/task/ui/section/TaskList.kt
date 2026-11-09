@@ -131,6 +131,9 @@ fun TaskList(
 
     var showDeleteDialog by remember { mutableStateOf(false) }
     var editState by remember { mutableStateOf(false) }
+    // Tapping a card toggles completion only while this is on; otherwise a tap does nothing, so
+    // scrolling the list can't finish a task by accident. It and reorder mode exclude each other.
+    var completeState by remember { mutableStateOf(false) }
 
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
     // The primary lens floats over the list, so it samples the page as its glass backdrop.
@@ -147,7 +150,15 @@ fun TaskList(
             state = state,
             scrollBehavior = scrollBehavior,
             isReorderMode = editState,
-            onReorderToggle = { editState = it },
+            onReorderToggle = {
+                editState = it
+                if (it) completeState = false
+            },
+            isCompleteMode = completeState,
+            onCompleteToggle = {
+                completeState = it
+                if (it) editState = false
+            },
             onDeleteClick = { showDeleteDialog = true },
             isExpanded = windowSizeClass.widthSizeClass == WindowWidthSizeClass.Expanded,
         )
@@ -163,13 +174,17 @@ fun TaskList(
             onAddCategoryClick = onAddCategory,
             onEditCategoriesClick = onEditCategories,
             isExpanded = windowSizeClass.widthSizeClass == WindowWidthSizeClass.Expanded,
-            onReorderModeChange = { editState = it },
+            onCategoryChange = {
+                editState = false
+                completeState = false
+            },
         )
 
         if (windowSizeClass.widthSizeClass != WindowWidthSizeClass.Expanded) {
             CompactTasksView(
                 state = state,
                 isReorderMode = editState,
+                isCompleteMode = completeState,
                 onAction = onAction,
                 onEditTask = onOpenTaskDetails,
                 isCompact = windowSizeClass.widthSizeClass == WindowWidthSizeClass.Compact,
@@ -224,6 +239,8 @@ private fun TaskListTopBar(
     scrollBehavior: TopAppBarScrollBehavior,
     isReorderMode: Boolean,
     onReorderToggle: (Boolean) -> Unit,
+    isCompleteMode: Boolean,
+    onCompleteToggle: (Boolean) -> Unit,
     onDeleteClick: () -> Unit,
     isExpanded: Boolean,
 ) {
@@ -269,6 +286,19 @@ private fun TaskListTopBar(
                 enter = fadeIn(motionScheme.fastEffectsSpec()),
                 exit = fadeOut(motionScheme.fastEffectsSpec()),
             ) {
+                CompleteModeButton(
+                    checked = isCompleteMode,
+                    onCheckedChange = onCompleteToggle,
+                    enabled = !state.tasks[state.currentCategory].isNullOrEmpty(),
+                    modifier = Modifier.padding(end = 8.dp),
+                )
+            }
+
+            AnimatedVisibility(
+                visible = state.tasks.values.isNotEmpty() && !isExpanded,
+                enter = fadeIn(motionScheme.fastEffectsSpec()),
+                exit = fadeOut(motionScheme.fastEffectsSpec()),
+            ) {
                 GlassIconButton(
                     icon = vectorResource(Res.drawable.reorder),
                     contentDescription = "调整顺序",
@@ -291,7 +321,7 @@ private fun CategorySelector(
     onAddCategoryClick: () -> Unit,
     onEditCategoriesClick: () -> Unit,
     isExpanded: Boolean,
-    onReorderModeChange: (Boolean) -> Unit,
+    onCategoryChange: () -> Unit,
 ) {
     // Category chips sit in a glass tray.
     LazyRow(
@@ -311,7 +341,7 @@ private fun CategorySelector(
                     checked = state.isTodayView,
                     onCheckedChange = {
                         onAction(TaskAction.SelectTodayView)
-                        onReorderModeChange(false)
+                        onCategoryChange()
                     },
                 ) {
                     Icon(
@@ -329,7 +359,7 @@ private fun CategorySelector(
                     checked = !state.isTodayView && category == state.currentCategory,
                     onCheckedChange = {
                         onAction(TaskAction.ChangeCategory(category))
-                        onReorderModeChange(false)
+                        onCategoryChange()
                     },
                 ) {
                     if (category.titleColor != null) {
@@ -395,6 +425,7 @@ private fun CategorySelector(
 private fun CompactTasksView(
     state: TaskState,
     isReorderMode: Boolean,
+    isCompleteMode: Boolean,
     onAction: (TaskAction) -> Unit,
     onEditTask: (Task) -> Unit,
     isCompact: Boolean,
@@ -483,6 +514,7 @@ private fun CompactTasksView(
                             TaskCard(
                                 task = task,
                                 dragState = isReorderMode && !isTodayView,
+                                completeState = isCompleteMode,
                                 reorderIcon = {
                                     Icon(
                                         imageVector = vectorResource(Res.drawable.drag_indicator),
@@ -510,14 +542,7 @@ private fun CompactTasksView(
                                 modifier =
                                     Modifier.fillMaxWidth()
                                         .clip(cardShape)
-                                        .clickable {
-                                            if (!isReorderMode) {
-                                                val updatedTask =
-                                                    task.copy(isCompleted = !task.isCompleted)
-
-                                                onAction(TaskAction.UpsertTask(updatedTask))
-                                            }
-                                        }
+                                        .completionToggle(isCompleteMode, task, onAction)
                                         .then(
                                             // Long press drags to reorder; the Today view mixes
                                             // categories whose indices can't be reordered.
@@ -578,6 +603,7 @@ private fun CompactTasksView(
                                 task = task,
                                 dragState = false,
                                 reorderIcon = {},
+                                completeState = isCompleteMode,
                                 is24Hr = state.is24Hour,
                                 shape = cardShape,
                                 onDetailsClick = { onEditTask(task) },
@@ -585,14 +611,9 @@ private fun CompactTasksView(
                                     onAction(TaskAction.UpsertTask(task.copy(sections = it)))
                                 },
                                 modifier =
-                                    Modifier.fillMaxWidth().clip(cardShape).clickable {
-                                        if (!isReorderMode) {
-                                            val updatedTask =
-                                                task.copy(isCompleted = !task.isCompleted)
-
-                                            onAction(TaskAction.UpsertTask(updatedTask))
-                                        }
-                                    },
+                                    Modifier.fillMaxWidth()
+                                        .clip(cardShape)
+                                        .completionToggle(isCompleteMode, task, onAction),
                             )
                         }
                     }
@@ -646,6 +667,8 @@ private fun ExpandedTasksView(
             val isTodayPanel = category.id == TODAY_VIEW_ID
             val displayTasks = if (state.reorderTasks) tasks.filter { !it.isCompleted } else tasks
             var showReorderDialog by remember { mutableStateOf(false) }
+            // Per panel: taps on this panel's cards toggle completion only while it is on.
+            var completeMode by remember { mutableStateOf(false) }
 
             Surface(
                 color = MaterialTheme.colorScheme.surfaceContainer,
@@ -671,6 +694,13 @@ private fun ExpandedTasksView(
                                 text = category.name,
                                 style = MaterialTheme.typography.headlineSmall,
                                 modifier = Modifier.padding(end = 8.dp).weight(1f),
+                            )
+
+                            CompleteModeButton(
+                                checked = completeMode,
+                                onCheckedChange = { completeMode = it },
+                                enabled = tasks.isNotEmpty(),
+                                modifier = Modifier.padding(end = 8.dp),
                             )
 
                             GlassIconButton(
@@ -710,6 +740,7 @@ private fun ExpandedTasksView(
                             task = task,
                             dragState = false,
                             reorderIcon = {},
+                            completeState = completeMode,
                             is24Hr = state.is24Hour,
                             shape = cardShape,
                             onDetailsClick = { onEditTask(task) },
@@ -717,10 +748,10 @@ private fun ExpandedTasksView(
                                 onAction(TaskAction.UpsertTask(task.copy(sections = it)))
                             },
                             modifier =
-                                Modifier.animateItem().fillMaxWidth().clip(cardShape).clickable {
-                                    val updatedTask = task.copy(isCompleted = !task.isCompleted)
-                                    onAction(TaskAction.UpsertTask(updatedTask))
-                                },
+                                Modifier.animateItem()
+                                    .fillMaxWidth()
+                                    .clip(cardShape)
+                                    .completionToggle(completeMode, task, onAction),
                         )
                     }
 
@@ -758,6 +789,7 @@ private fun ExpandedTasksView(
                                 task = task,
                                 dragState = false,
                                 reorderIcon = {},
+                                completeState = completeMode,
                                 is24Hr = state.is24Hour,
                                 shape = cardShape,
                                 onDetailsClick = { onEditTask(task) },
@@ -765,10 +797,9 @@ private fun ExpandedTasksView(
                                     onAction(TaskAction.UpsertTask(task.copy(sections = it)))
                                 },
                                 modifier =
-                                    Modifier.fillMaxWidth().clip(cardShape).clickable {
-                                        val updatedTask = task.copy(isCompleted = !task.isCompleted)
-                                        onAction(TaskAction.UpsertTask(updatedTask))
-                                    },
+                                    Modifier.fillMaxWidth()
+                                        .clip(cardShape)
+                                        .completionToggle(completeMode, task, onAction),
                             )
                         }
                     }
@@ -883,6 +914,37 @@ private fun ExpandedTasksView(
         }
     }
 }
+
+/** Switch beside "调整顺序": while it is on, tapping a task card toggles its completion. */
+@Composable
+private fun CompleteModeButton(
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    enabled: Boolean,
+    modifier: Modifier = Modifier,
+) {
+    GlassIconButton(
+        icon = vectorResource(Res.drawable.check_circle),
+        contentDescription = "切换完成状态",
+        onClick = { onCheckedChange(!checked) },
+        checked = checked,
+        enabled = enabled,
+        modifier = modifier,
+    )
+}
+
+/**
+ * A tap toggles the task's completion only when [enabled] (the completion switch is on). When off
+ * the card takes no taps at all, so a touch that starts a scroll can't finish a task.
+ */
+private fun Modifier.completionToggle(
+    enabled: Boolean,
+    task: Task,
+    onAction: (TaskAction) -> Unit,
+): Modifier =
+    clickable(enabled = enabled) {
+        onAction(TaskAction.UpsertTask(task.copy(isCompleted = !task.isCompleted)))
+    }
 
 @Composable
 private fun DeleteTasksDialog(onDismiss: () -> Unit, onConfirm: () -> Unit) {

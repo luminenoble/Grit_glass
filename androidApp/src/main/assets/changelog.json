@@ -1,5 +1,12 @@
 [
   {
+    "version": "1.0.2",
+    "changes": [
+      "Tasks: tapping a task no longer marks it done or not done by accident. Turn on the new tick button beside Reorder first; while it is on, each task shows a circle and a tap toggles it. With it off, a tap on a task does nothing and the list just scrolls",
+      "The tick button and Reorder turn each other off, and both turn off when you switch category"
+    ]
+  },
+  {
     "version": "1.0.1",
     "changes": [
       "Tasks widget: each task shows only its title; the step count is gone, and a task without steps no longer shows another task's step line",
