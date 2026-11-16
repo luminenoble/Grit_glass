@@ -114,7 +114,7 @@ class TaskRepoStub : TaskRepo {
     private val data =
         MutableStateFlow(
             DemoData(
-                listOf(Category(id = 1, name = "工作")),
+                listOf(Category(id = 1, name = "Work")),
                 listOf(Task(id = 1, categoryId = 1, title = "Welcome to Grit Glass")),
             )
         )

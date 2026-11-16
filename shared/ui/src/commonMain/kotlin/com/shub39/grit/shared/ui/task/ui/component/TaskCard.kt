@@ -75,7 +75,7 @@ fun TaskCard(
         ) {
             if (onDetailsClick != null)
                 IconButton(onClick = onDetailsClick) {
-                    Icon(vectorResource(Res.drawable.info), "详情")
+                    Icon(vectorResource(Res.drawable.info), "Details")
                 }
             Column(Modifier.weight(1f)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -100,7 +100,7 @@ fun TaskCard(
                     if (done && !completeState)
                         Icon(
                             vectorResource(Res.drawable.check_circle),
-                            "已完成",
+                            "Done",
                             Modifier.size(20.dp),
                             tint = GlassTokens.Done,
                         )
@@ -148,7 +148,7 @@ fun TaskCard(
                 }
                 task.deadline?.let { deadline ->
                     Text(
-                        "DDL ${deadline.label(LocalDate.now())}",
+                        "Due ${deadline.label(LocalDate.now())}",
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -169,7 +169,7 @@ fun TaskCard(
             AnimatedVisibility(completeState) {
                 Icon(
                     vectorResource(if (done) Res.drawable.check_circle else Res.drawable.circle_border),
-                    if (done) "已完成，点按取消完成" else "未完成，点按标记完成",
+                    if (done) "Done, tap to reopen" else "Not done, tap to complete",
                     Modifier.padding(start = 8.dp).size(24.dp),
                     tint = if (done) GlassTokens.Done else MaterialTheme.colorScheme.onSurfaceVariant,
                 )

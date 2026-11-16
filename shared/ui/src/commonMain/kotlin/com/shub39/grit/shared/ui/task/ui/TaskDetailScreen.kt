@@ -62,10 +62,10 @@ fun TaskErrorDialog(state: TaskState, onAction: (TaskAction) -> Unit) {
     val error = state.error ?: return
     GlassAlertDialog(
         onDismissRequest = { onAction(TaskAction.ClearError) },
-        title = { Text("操作失败") },
+        title = { Text("Something went wrong") },
         text = { Text(error) },
         confirmButton = {
-            TextButton(onClick = { onAction(TaskAction.ClearError) }) { Text("关闭") }
+            TextButton(onClick = { onAction(TaskAction.ClearError) }) { Text("Close") }
         },
     )
 }

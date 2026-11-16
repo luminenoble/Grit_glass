@@ -25,9 +25,15 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.number
 import kotlinx.datetime.toLocalDateTime
 
-/** "11月23日", with the year once it is not this one. */
+private val Months =
+    listOf("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
+
+/** "Nov 23", with the year once it is not this one. */
 fun LocalDate.label(today: LocalDate): String =
-    if (year == today.year) "${month.number}月${day}日" else "${year}年${month.number}月${day}日"
+    "${Months[month.number - 1]} $day".let { if (year == today.year) it else "$it, $year" }
+
+/** "1 day", "12 days". */
+fun days(count: Int): String = if (count == 1) "1 day" else "$count days"
 
 /**
  * What a dated wall card says about time: the days left, or just the date once it has passed. A
@@ -37,21 +43,21 @@ fun Task.deadlineLabel(today: LocalDate): String? {
     val left = daysLeft(today) ?: return null
     return when {
         left < 0 -> deadline?.label(today)
-        left == 0 -> "今天"
-        left == 1 -> "明天"
-        else -> "$left 天"
+        left == 0 -> "Today"
+        left == 1 -> "Tomorrow"
+        else -> days(left)
     }
 }
 
 /** What an undated wall card says about time: days since it was last worked on. */
 fun Task.idleLabel(today: LocalDate): String =
-    idleDays(today).let { if (it == 0) "刚动过" else "$it 天" }
+    idleDays(today).let { if (it == 0) "Today" else days(it) }
 
 fun Priority.label(): String =
     when (this) {
-        Priority.LOW -> "低"
-        Priority.NORMAL -> "普通"
-        Priority.HIGH -> "高"
+        Priority.LOW -> "Low"
+        Priority.NORMAL -> "Normal"
+        Priority.HIGH -> "High"
     }
 
 /** The day the task was completed, in the device's time zone. */

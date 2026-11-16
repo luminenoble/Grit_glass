@@ -46,11 +46,11 @@ fun LookAndFeelPage(
 ) {
     Column {
         TopAppBar(
-            title = { Text("外观") },
+            title = { Text("Look and Feel") },
             navigationIcon = {
                 GlassIconButton(
                     icon = vectorResource(Res.drawable.nav_arrow_back),
-                    contentDescription = "返回",
+                    contentDescription = "Back",
                     onClick = onNavigateBack,
                     modifier = Modifier.padding(horizontal = 8.dp),
                 )
@@ -67,8 +67,8 @@ fun LookAndFeelPage(
         ) {
             item {
                 ListItem(
-                    headlineContent = { Text("降低透明度") },
-                    supportingContent = { Text("玻璃材质改为不透明并关闭背景模糊，提升可读性与性能") },
+                    headlineContent = { Text("Reduce transparency") },
+                    supportingContent = { Text("Makes glass opaque and turns off background blur, for readability and performance") },
                     trailingContent = {
                         ExpressiveSwitch(
                             checked = state.theme.reduceTransparency,
@@ -81,7 +81,7 @@ fun LookAndFeelPage(
                     modifier = Modifier.padding(bottom = 12.dp).glassItem(detachedItemShape()),
                 )
             }
-            item { Text("字体", Modifier.padding(8.dp), style = MaterialTheme.typography.titleSmall) }
+            item { Text("Font", Modifier.padding(8.dp), style = MaterialTheme.typography.titleSmall) }
             items(Fonts.entries.size) { index ->
                 val font = Fonts.entries[index]
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {

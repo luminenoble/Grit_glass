@@ -72,7 +72,7 @@ fun Changelog(modifier: Modifier = Modifier, changelog: Changelog, onNavigateBac
                 navigationIcon = {
                     GlassIconButton(
                         icon = vectorResource(Res.drawable.nav_arrow_back),
-                        contentDescription = "返回",
+                        contentDescription = "Back",
                         onClick = onNavigateBack,
                         modifier = Modifier.padding(horizontal = 8.dp),
                     )

@@ -44,7 +44,7 @@ import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.delay
 
 /**
- * "已归档 · 撤销": shown for a few seconds above the navigation pill after a task is completed and
+ * "Archived · Undo": shown for a few seconds above the navigation pill after a task is completed and
  * leaves the lists for the archive.
  */
 @Composable
@@ -73,7 +73,7 @@ fun BoxScope.ArchiveToast(
         exit = fadeOut(),
     ) {
         GlassToast(
-            text = "已归档",
+            text = "Archived",
             backdrop = backdrop,
             trailing = {
                 Box(
@@ -82,7 +82,7 @@ fun BoxScope.ArchiveToast(
                         .padding(horizontal = 10.dp, vertical = 6.dp)
                 ) {
                     Text(
-                        "撤销",
+                        "Undo",
                         color = MaterialTheme.colorScheme.onSurface,
                         style =
                             MaterialTheme.typography.labelLarge.copy(

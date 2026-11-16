@@ -65,7 +65,7 @@ fun SectionEditor(
             )
             // Each Section has its own colour (solid or gradient); unset is black.
             TitleColorRow(
-                label = "文字颜色",
+                label = "Text color",
                 value = titleColor,
                 default = Color.Black,
                 onChange = { titleColor = it },
@@ -74,7 +74,7 @@ fun SectionEditor(
             OutlinedTextField(
                 content,
                 { content = it },
-                label = { Text("内容") },
+                label = { Text("Content") },
                 modifier = Modifier.fillMaxWidth(),
                 minLines = 3,
                 maxLines = if (wide) 3 else 5,
@@ -86,7 +86,7 @@ fun SectionEditor(
                     enabled = !saving,
                     onCheckedChange = { completed = it },
                 )
-                Text("已完成", Modifier.padding(top = 12.dp))
+                Text("Done", Modifier.padding(top = 12.dp))
             }
         }
     }
@@ -107,7 +107,7 @@ fun SectionEditor(
                 )
             },
         ) {
-            Text(if (saving) "保存中…" else "保存")
+            Text(if (saving) "Saving…" else "Save")
         }
     }
     val dismissButtons: @Composable () -> Unit = {
@@ -118,14 +118,14 @@ fun SectionEditor(
                     onClick = { if (confirmDeletion) confirmDelete = true else onDelete() },
                     enabled = !saving,
                 ) {
-                    Text("删除")
+                    Text("Delete")
                 }
             TextButton(
                 onClick = onDismiss,
                 enabled = !saving,
                 modifier = if (compactIme) Modifier.height(36.dp) else Modifier,
             ) {
-                Text("取消")
+                Text("Cancel")
             }
         }
     }
@@ -159,7 +159,7 @@ fun SectionEditor(
                             verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
                         ) {
                             Text(
-                                if (section.id == 0L) "新建 Section" else "编辑 Section",
+                                if (section.id == 0L) "New section" else "Edit section",
                                 Modifier.weight(1f),
                                 style =
                                     if (compactIme) MaterialTheme.typography.titleSmall
@@ -176,7 +176,7 @@ fun SectionEditor(
     } else
         GlassAlertDialog(
             onDismissRequest = { if (!saving) onDismiss() },
-            title = { Text(if (section.id == 0L) "新建 Section" else "编辑 Section") },
+            title = { Text(if (section.id == 0L) "New section" else "Edit section") },
             text = fields,
             confirmButton = saveButton,
             dismissButton = dismissButtons,
@@ -184,11 +184,11 @@ fun SectionEditor(
     if (confirmDelete)
         GlassAlertDialog(
             onDismissRequest = { if (!saving) confirmDelete = false },
-            title = { Text("删除 Section") },
-            text = { Text("删除「${title.ifBlank { "unname" }}」？") },
-            confirmButton = { TextButton(onClick = onDelete, enabled = !saving) { Text("删除") } },
+            title = { Text("Delete section") },
+            text = { Text("Delete “${title.ifBlank { "unname" }}”?") },
+            confirmButton = { TextButton(onClick = onDelete, enabled = !saving) { Text("Delete") } },
             dismissButton = {
-                TextButton(onClick = { confirmDelete = false }, enabled = !saving) { Text("取消") }
+                TextButton(onClick = { confirmDelete = false }, enabled = !saving) { Text("Cancel") }
             },
         )
 }

@@ -82,7 +82,7 @@ enum class GlassTier {
     Content,
 }
 
-/** [Reduced] makes every tier opaque and disables backdrop blur ("降低透明度"). */
+/** [Reduced] makes every tier opaque and disables backdrop blur ("Reduce transparency"). */
 enum class GlassMode {
     Standard,
     Reduced,

@@ -135,7 +135,7 @@ class SettingsDatastoreImpl(
         }
 
     override suspend fun setWallSettings(settings: WallSettings) {
-        require(settings.thresholds.isValid) { "档位阈值必须是正整数，并且 a < b < c" }
+        require(settings.thresholds.isValid) { "Thresholds must be positive integers with a < b < c" }
         datastore.edit { prefs ->
             prefs[wallXlDaysKey] = settings.thresholds.a
             prefs[wallLDaysKey] = settings.thresholds.b

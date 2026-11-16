@@ -76,7 +76,7 @@ class TasksRepository(
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                Log.e("TasksRepository", "刷新失败，将在后续启动重试", e)
+                Log.e("TasksRepository", "Refresh failed; it is retried on a later start", e)
             }
         }
         removed.forEach { task ->
@@ -111,9 +111,9 @@ class TasksRepository(
             db.withWriteTransaction {
                 require(task.title.isNotBlank())
                 validateTitleColor(task.titleColor)
-                require(categories.getById(task.categoryId) != null) { "类别已被删除" }
+                require(categories.getById(task.categoryId) != null) { "The category was deleted" }
                 val previous = if (task.id == 0L) null else tasks.getTaskById(task.id)?.toTask()
-                require(task.id == 0L || previous != null) { "任务已被删除" }
+                require(task.id == 0L || previous != null) { "The task was deleted" }
                 val known = previous?.sections?.associateBy { it.id } ?: emptyMap()
                 val positiveIds = task.sections.filter { it.id > 0 }.map { it.id }
                 require(
@@ -178,7 +178,7 @@ class TasksRepository(
                 require(category.name.isNotBlank())
                 validateTitleColor(category.titleColor)
                 val old = if (category.id == 0L) null else categories.getById(category.id)
-                require(category.id == 0L || old != null) { "类别已被删除" }
+                require(category.id == 0L || old != null) { "The category was deleted" }
                 val now = Clock.System.now()
                 val inserted =
                     categories.upsert(

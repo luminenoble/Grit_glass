@@ -50,6 +50,7 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.shub39.grit.core.settings.ImportanceDisplay
@@ -80,17 +81,21 @@ private val Priority.fade: Float
     get() =
         when (this) {
             Priority.HIGH -> 0f
-            Priority.NORMAL -> 0.35f
-            Priority.LOW -> 0.60f
+            Priority.NORMAL -> 0.48f
+            Priority.LOW -> 0.68f
         }
+
+/** Colours cannot go deeper than they are stored, so a high priority is drawn heavier instead. */
+private val Priority.borderWidth: Dp
+    get() = if (this == Priority.HIGH) 2.5.dp else 1.5.dp
 
 /** How strongly the category colour washes the paper, when the background shows importance. */
 private val Priority.wash: Float
     get() =
         when (this) {
-            Priority.HIGH -> 0.24f
-            Priority.NORMAL -> 0.12f
-            Priority.LOW -> 0.06f
+            Priority.HIGH -> 0.34f
+            Priority.NORMAL -> 0.10f
+            Priority.LOW -> 0.04f
         }
 
 private fun brushOf(stops: List<Color>): Brush =
@@ -166,7 +171,12 @@ fun WallTile(
                 fontSize = textSize.sp,
                 lineHeight = (textSize * 1.3f).sp,
                 letterSpacing = 0.sp,
-                fontWeight = if (tier == WallTier.XL) FontWeight.SemiBold else FontWeight.Medium,
+                fontWeight =
+                    when {
+                        task.priority == Priority.HIGH -> FontWeight.Bold
+                        tier == WallTier.XL -> FontWeight.SemiBold
+                        else -> FontWeight.Medium
+                    },
             )
             .let {
                 if (fadedTitle.size == 1) it.copy(color = fadedTitle[0])
@@ -193,7 +203,7 @@ fun WallTile(
         modifier
             .onGloballyPositioned { position[0] = it }
             .background(fill, shape)
-            .border(1.5.dp, border, shape)
+            .border(task.priority.borderWidth, border, shape)
             .clip(shape)
             .drawBehind {
                 if (overdue) {
@@ -225,7 +235,7 @@ fun WallTile(
                 if (task.isToday)
                     Icon(
                         vectorResource(Res.drawable.light_mode),
-                        contentDescription = "今天要做",
+                        contentDescription = "On Today",
                         modifier = Modifier.padding(end = if (meta != null) 3.dp else 0.dp).size(12.dp),
                         tint = GlassTokens.SecondaryText,
                     )

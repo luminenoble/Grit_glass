@@ -79,8 +79,8 @@ fun CardTapKeys(
             val chosen = key == selected
             val name =
                 when (key) {
-                    CardTap.Preview -> "预览"
-                    CardTap.Detail -> "详情"
+                    CardTap.Preview -> "Preview"
+                    CardTap.Detail -> "Details"
                 }
             val ink by
                 animateColorAsState(
@@ -116,7 +116,7 @@ fun CardTapKeys(
                             CardTap.Detail -> Res.drawable.edit
                         }
                     ),
-                    contentDescription = if (chosen) null else "点卡片：$name",
+                    contentDescription = if (chosen) null else "Tap a card: $name",
                     modifier = Modifier.size(GlassMetrics.Icon),
                     tint = ink,
                 )

@@ -115,7 +115,7 @@ fun ColorPickerDialog(
     default: Color,
     onSelect: (String?) -> Unit,
     onDismiss: () -> Unit,
-    title: String = "文字颜色",
+    title: String = "Text color",
 ) {
     val initial = remember { parseTitleColors(value) ?: listOf(default) }
     val stops = remember { mutableStateListOf<Color>().apply { addAll(initial) } }
@@ -147,14 +147,14 @@ fun ColorPickerDialog(
         val text = runCatching { clipboard.getText()?.text?.trim() }.getOrNull()
         val colors = parseTitleColors(text) ?: parseTitleColors(TitleColorClipboard.value)
         if (colors == null) {
-            notice = "剪贴板中没有颜色"
+            notice = "No color on the clipboard"
             return
         }
         stops.clear()
         stops.addAll(colors)
         gradient = colors.size > 1
         select(0)
-        notice = "已粘贴"
+        notice = "Pasted"
     }
 
     // Opaque, so nothing behind the dialog tints the colours being judged. Up to the dialog's full
@@ -200,7 +200,7 @@ fun ColorPickerDialog(
                             options = listOf(false, true),
                             selected = gradient,
                             onSelect = ::setGradient,
-                            label = { if (it) "渐变" else "纯色" },
+                            label = { if (it) "Gradient" else "Solid" },
                         )
                     }
                     ColorPreview(used)
@@ -227,12 +227,12 @@ fun ColorPickerDialog(
                             onClick = {
                                 TitleColorClipboard.value = result
                                 runCatching { clipboard.setText(AnnotatedString(result)) }
-                                notice = "已复制 $result"
+                                notice = "Copied $result"
                             }
                         ) {
-                            Text("复制")
+                            Text("Copy")
                         }
-                        GlassButton(onClick = ::paste) { Text("粘贴") }
+                        GlassButton(onClick = ::paste) { Text("Paste") }
                         notice?.let {
                             Text(
                                 it,
@@ -260,9 +260,9 @@ fun ColorPickerDialog(
                             onDismiss()
                         }
                     ) {
-                        Text("默认")
+                        Text("Default")
                     }
-                    TextButton(onClick = onDismiss) { Text("取消") }
+                    TextButton(onClick = onDismiss) { Text("Cancel") }
                     GlassButton(
                         style = GlassButtonStyle.Prominent,
                         onClick = {
@@ -272,7 +272,7 @@ fun ColorPickerDialog(
                             onDismiss()
                         },
                     ) {
-                        Text("完成")
+                        Text("Done")
                     }
                 }
             }
@@ -318,7 +318,7 @@ private fun ColorPreview(colors: List<Color>) {
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         Text(
-            "示例文字 Aa 0123",
+            "Sample text Aa 0123",
             style =
                 MaterialTheme.typography.titleLarge
                     .copy(fontWeight = FontWeight.SemiBold)
@@ -364,8 +364,8 @@ private fun StopRow(
                     .background(color)
             )
         }
-        if (stops.size < MaxTitleColorStops) TextButton(onClick = onAdd) { Text("+ 颜色") }
-        if (stops.size > 2) TextButton(onClick = onRemove) { Text("移除") }
+        if (stops.size < MaxTitleColorStops) TextButton(onClick = onAdd) { Text("+ Color") }
+        if (stops.size > 2) TextButton(onClick = onRemove) { Text("Remove") }
     }
 }
 
@@ -498,9 +498,9 @@ fun TitleColorRow(
             )
             Text(
                 when {
-                    colors == null -> "默认"
+                    colors == null -> "Default"
                     colors.size == 1 -> colors[0].toHexString()
-                    else -> "渐变 · ${colors.size} 色"
+                    else -> "Gradient · ${colors.size} colors"
                 },
                 style = MaterialTheme.typography.labelSmall,
                 color = GlassTokens.SecondaryText,
@@ -508,7 +508,7 @@ fun TitleColorRow(
             )
         }
         // Back to the default is in the dialog, which keeps this row narrow enough for dialogs.
-        TextButton(onClick = { picking = true }, enabled = enabled) { Text("选择") }
+        TextButton(onClick = { picking = true }, enabled = enabled) { Text("Choose") }
     }
     if (picking)
         ColorPickerDialog(

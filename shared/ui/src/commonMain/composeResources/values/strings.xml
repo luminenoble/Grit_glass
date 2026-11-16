@@ -106,6 +106,6 @@
     <string name="section_reorder">Reorder sections</string>
     <string name="section_reorder_done">Finish reordering</string>
     <string name="task_tab">Task</string>
-    <string name="overview_tab">总览</string>
+    <string name="overview_tab">Overview</string>
     <string name="setting_tab">Setting</string>
 </resources>

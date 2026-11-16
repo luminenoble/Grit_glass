@@ -50,7 +50,7 @@ class GritIntentReceiver : BroadcastReceiver(), KoinComponent {
                             get<GritNotificationManager>().taskNotification(task)
                 }
             } catch (e: Exception) {
-                Log.e("GritIntentReceiver", "处理任务通知失败", e)
+                Log.e("GritIntentReceiver", "Handling the task notification failed", e)
             } finally {
                 pending.finish()
             }

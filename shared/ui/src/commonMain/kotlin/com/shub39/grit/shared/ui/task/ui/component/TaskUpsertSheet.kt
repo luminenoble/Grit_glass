@@ -379,7 +379,7 @@ fun TaskUpsertSheetContent(
 
             item {
                 TitleColorRow(
-                    label = "标题文字颜色",
+                    label = "Title color",
                     value = newTask.titleColor,
                     default = MaterialTheme.colorScheme.onSurface,
                     onChange = { newTask = newTask.copy(titleColor = it) },
@@ -400,9 +400,9 @@ fun TaskUpsertSheetContent(
                             contentDescription = null,
                         )
                     },
-                    headlineContent = { Text("DDL") },
+                    headlineContent = { Text("Deadline") },
                     supportingContent = {
-                        Text(newTask.deadline?.label(today) ?: "没有 DDL。点按选一天")
+                        Text(newTask.deadline?.label(today) ?: "No deadline. Tap to pick a day")
                     },
                     trailingContent = {
                         if (newTask.deadline != null)
@@ -412,7 +412,7 @@ fun TaskUpsertSheetContent(
                             ) {
                                 Icon(
                                     imageVector = vectorResource(Res.drawable.close),
-                                    contentDescription = "去掉 DDL",
+                                    contentDescription = "No date",
                                 )
                             }
                     },
@@ -428,7 +428,7 @@ fun TaskUpsertSheetContent(
                             contentDescription = null,
                         )
                     },
-                    headlineContent = { Text("优先级") },
+                    headlineContent = { Text("Priority") },
                     supportingContent = {
                         GlassSegmented(
                             options = Priority.entries,
@@ -444,7 +444,7 @@ fun TaskUpsertSheetContent(
             item {
                 ListItem(
                     modifier = Modifier.clip(detachedItemShape()),
-                    headlineContent = { Text("任务已完成") },
+                    headlineContent = { Text("Task completed") },
                     trailingContent = {
                         ExpressiveSwitch(
                             enabled = !saving,
@@ -459,7 +459,7 @@ fun TaskUpsertSheetContent(
             item {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                     Text(
-                        if (restrictStructure) "Section · 排序待接入"
+                        if (restrictStructure) "Sections · reordering unavailable"
                         else stringResource(Res.string.sections),
                         Modifier.padding(top = 12.dp),
                     )
@@ -530,7 +530,7 @@ fun TaskUpsertSheetContent(
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     Icon(
                                         imageVector = vectorResource(Res.drawable.drag_indicator),
-                                        contentDescription = "拖动排序",
+                                        contentDescription = "Drag to reorder",
                                         modifier =
                                             if (saving) Modifier else Modifier.draggableHandle(),
                                     )
@@ -542,14 +542,14 @@ fun TaskUpsertSheetContent(
                                                 (sectionItems.indexOf(step) + 1).toString()
                                         },
                                     ) {
-                                        Text("位置")
+                                        Text("Position")
                                     }
                                 }
                             } else {
                                 IconButton(enabled = !saving, onClick = { editingSection = step }) {
                                     Icon(
                                         imageVector = vectorResource(Res.drawable.edit),
-                                        contentDescription = "编辑 Section",
+                                        contentDescription = "Edit section",
                                     )
                                 }
                             }
@@ -608,13 +608,13 @@ fun TaskUpsertSheetContent(
                             contentDescription = null,
                         )
                     },
-                    headlineContent = { Text("挂起") },
+                    headlineContent = { Text("Suspend") },
                     supportingContent = {
                         Column {
                             val until = newTask.hiddenUntil?.takeIf { it > today }
                             Text(
-                                if (until != null) "到 ${until.label(today)} 再回到 Task 页和任务墙"
-                                else "到选定的那天之前，不出现在 Task 页和任务墙上"
+                                if (until != null) "Back on the Task page and the wall on ${until.label(today)}"
+                                else "Off the Task page and the wall until the day you pick"
                             )
                             FlowRow(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                                 val day: (LocalDate?) -> Unit = {
@@ -624,29 +624,29 @@ fun TaskUpsertSheetContent(
                                     enabled = !saving,
                                     onClick = { day(today.plus(1, DateTimeUnit.DAY)) },
                                 ) {
-                                    Text("明天")
+                                    Text("Tomorrow")
                                 }
                                 TextButton(
                                     enabled = !saving,
                                     onClick = { day(today.nextMonday()) },
                                 ) {
-                                    Text("下周一")
+                                    Text("Monday")
                                 }
                                 TextButton(
                                     enabled = !saving,
                                     onClick = { day(today.plus(1, DateTimeUnit.MONTH)) },
                                 ) {
-                                    Text("一个月后")
+                                    Text("In a month")
                                 }
                                 TextButton(
                                     enabled = !saving,
                                     onClick = { pickingDay = DayField.HiddenUntil },
                                 ) {
-                                    Text("选日期")
+                                    Text("Pick a day")
                                 }
                                 if (until != null)
                                     TextButton(enabled = !saving, onClick = { day(null) }) {
-                                        Text("不挂起")
+                                        Text("Clear")
                                     }
                             }
                         }
@@ -664,8 +664,8 @@ fun TaskUpsertSheetContent(
                             contentDescription = null,
                         )
                     },
-                    headlineContent = { Text("以后再说") },
-                    supportingContent = { Text("先放一边，不定日期。只留在总览的“以后再说”里") },
+                    headlineContent = { Text("Later") },
+                    supportingContent = { Text("Set aside with no date. Listed only under Later in Overview") },
                     trailingContent = {
                         ExpressiveSwitch(
                             enabled = !saving,
@@ -785,20 +785,20 @@ fun TaskUpsertSheetContent(
                 },
                 actions = {
                     if (restrictStructure) {
-                        TextButton(onClick = requestClose, enabled = !saving) { Text("取消") }
+                        TextButton(onClick = requestClose, enabled = !saving) { Text("Cancel") }
                         TextButton(
                             onClick = saveDraft,
                             enabled =
                                 !saving && draft.title.isNotBlank() && isValidDateTime && dirty,
                         ) {
-                            Text(if (saving) "保存中…" else "保存")
+                            Text(if (saving) "Saving…" else "Save")
                         }
                     }
                 },
                 navigationIcon = {
                     GlassIconButton(
                         icon = vectorResource(Res.drawable.nav_arrow_back),
-                        contentDescription = "返回",
+                        contentDescription = "Back",
                         onClick = requestClose,
                         enabled = !saving,
                         modifier = Modifier.padding(horizontal = 8.dp),
@@ -820,8 +820,8 @@ fun TaskUpsertSheetContent(
     if (showUnsaved)
         GlassAlertDialog(
             onDismissRequest = { showUnsaved = false },
-            title = { Text("未保存的修改") },
-            text = { Text("保存修改，或放弃后返回？") },
+            title = { Text("Unsaved changes") },
+            text = { Text("Save your changes, or discard them and go back?") },
             confirmButton = {
                 TextButton(
                     enabled = !saving && draft.title.isNotBlank() && isValidDateTime,
@@ -830,7 +830,7 @@ fun TaskUpsertSheetContent(
                         saveDraft()
                     },
                 ) {
-                    Text("保存")
+                    Text("Save")
                 }
             },
             dismissButton = {
@@ -841,17 +841,17 @@ fun TaskUpsertSheetContent(
                             onDismissRequest()
                         }
                     ) {
-                        Text("放弃")
+                        Text("Give up")
                     }
-                    TextButton(onClick = { showUnsaved = false }) { Text("继续编辑") }
+                    TextButton(onClick = { showUnsaved = false }) { Text("Keep editing") }
                 }
             },
         )
     if (showTaskDelete)
         GlassAlertDialog(
             onDismissRequest = { showTaskDelete = false },
-            title = { Text("删除任务") },
-            text = { Text("删除「${task.title}」及其 ${task.sections.size} 条 Section？") },
+            title = { Text("Delete task") },
+            text = { Text("Delete “${task.title}” and its ${task.sections.size} sections?") },
             confirmButton = {
                 TextButton(
                     enabled = !saving,
@@ -860,16 +860,16 @@ fun TaskUpsertSheetContent(
                         onDelete()
                     },
                 ) {
-                    Text("删除")
+                    Text("Delete")
                 }
             },
-            dismissButton = { TextButton(onClick = { showTaskDelete = false }) { Text("取消") } },
+            dismissButton = { TextButton(onClick = { showTaskDelete = false }) { Text("Cancel") } },
         )
     movingSection?.let { item ->
         val target = targetPosition.toIntOrNull()
         GlassAlertDialog(
             onDismissRequest = { movingSection = null },
-            title = { Text("移动到第几项") },
+            title = { Text("Move to position") },
             text = {
                 OutlinedTextField(
                     enabled = !saving,
@@ -891,10 +891,10 @@ fun TaskUpsertSheetContent(
                         movingSection = null
                     },
                 ) {
-                    Text("移动")
+                    Text("Move")
                 }
             },
-            dismissButton = { TextButton(onClick = { movingSection = null }) { Text("取消") } },
+            dismissButton = { TextButton(onClick = { movingSection = null }) { Text("Cancel") } },
         )
     }
     editingSection?.let { item ->

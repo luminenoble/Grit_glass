@@ -30,14 +30,14 @@ data class TaskBackup(
     val tasks: List<Task>,
 ) {
     fun validated(): TaskBackup {
-        require(format == FORMAT && formatVersion == VERSION) { "只支持 Grit Glass 备份格式版本 $VERSION" }
+        require(format == FORMAT && formatVersion == VERSION) { "Only Grit Glass backup format version $VERSION is supported" }
         require(
             categories.all { it.id > 0 } &&
                 categories.map { it.id }.distinct().size == categories.size
         )
         require(tasks.all { it.id > 0 } && tasks.map { it.id }.distinct().size == tasks.size)
         fun order(indices: List<Int>) =
-            require(indices.sorted() == indices.indices.toList()) { "同级排序必须连续" }
+            require(indices.sorted() == indices.indices.toList()) { "Order within a parent must be contiguous" }
         order(categories.map { it.orderIndex })
         categories.forEach {
             require(it.name.isNotBlank())
@@ -49,7 +49,7 @@ data class TaskBackup(
             require(task.categoryId in categoryIds && task.title.isNotBlank())
             validateTitleColor(task.titleColor)
             require(task.updatedAt >= task.createdAt)
-            require(task.isCompleted == (task.completedAt != null)) { "完成时间与完成状态不一致" }
+            require(task.isCompleted == (task.completedAt != null)) { "Completion time does not match the completed state" }
             order(task.sections.map { it.orderIndex })
         }
         tasks.groupBy { it.categoryId }.values.forEach { order(it.map { task -> task.orderIndex }) }
@@ -80,7 +80,7 @@ data class TaskBackup(
         }
 
         private fun required(o: JsonObject, vararg keys: String) {
-            require(keys.all { it in o }) { "备份缺少必要字段" }
+            require(keys.all { it in o }) { "The backup is missing required fields" }
         }
 
         /**
@@ -133,7 +133,7 @@ data class TaskBackup(
             if (format == LEGACY_FORMAT && version == LEGACY_VERSION) root = upgradeLegacy(root)
             else
                 require(format == FORMAT && version == VERSION) {
-                    "只支持 Grit Glass 备份（版本 $VERSION），以及 Grit Glass / Grhinet 的旧版备份（grit_rhine 版本 1）"
+                    "Only Grit Glass backups (version $VERSION) and older Grit Glass / Grhinet backups (grit_rhine version 1) are supported"
                 }
             root.getValue("categories").jsonArray.forEach {
                 required(it.jsonObject, "id", "name", "orderIndex", "createdAt", "updatedAt")

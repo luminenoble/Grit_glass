@@ -52,7 +52,7 @@ private class GithubUpdateChecker : UpdateChecker {
                     conn.responseCode
                 } catch (e: Exception) {
                     conn.disconnect()
-                    throw IllegalStateException("网络请求失败：${e.message}", e)
+                    throw IllegalStateException("Network request failed: ${e.message}", e)
                 }
 
             // A repository without any published release answers 404; that is not an error.
@@ -66,8 +66,8 @@ private class GithubUpdateChecker : UpdateChecker {
             conn.disconnect()
 
             when {
-                code == 403 || code == 429 -> error("GitHub 接口限流，请稍后再试")
-                code !in 200..299 -> error("GitHub 返回 HTTP $code：${body.take(200)}")
+                code == 403 || code == 429 -> error("GitHub rate limit reached. Try again later")
+                code !in 200..299 -> error("GitHub returned HTTP $code: ${body.take(200)}")
             }
 
             val release = json.parseToJsonElement(body).jsonObject
@@ -75,7 +75,7 @@ private class GithubUpdateChecker : UpdateChecker {
             fun field(name: String): String? =
                 release[name]?.jsonPrimitive?.contentOrNull?.takeIf { it.isNotBlank() }
 
-            val tag = field("tag_name") ?: error("响应中没有找到 tag_name 字段")
+            val tag = field("tag_name") ?: error("No tag_name in the response")
 
             AppRelease(
                 versionName = tag.removePrefix("v").removePrefix("V"),

@@ -42,6 +42,6 @@ class RestoreImpl(private val taskRepo: TaskRepo) : RestoreRepo {
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            RestoreResult.Failure(e.message ?: "导入失败，原数据未改变")
+            RestoreResult.Failure(e.message ?: "Import failed. Your data was not changed")
         }
 }

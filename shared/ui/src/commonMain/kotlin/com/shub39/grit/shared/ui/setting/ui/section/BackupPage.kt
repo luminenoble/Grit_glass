@@ -74,17 +74,17 @@ fun BackupPage(
     state.restorePreview?.let { preview ->
         GlassAlertDialog(
             onDismissRequest = { onAction(SettingsAction.OnCancelRestore) },
-            title = { Text("替换现有数据") },
+            title = { Text("Replace current data") },
             text = {
                 Text(
-                    "导入 ${preview.categoryCount} 个 Category、${preview.taskCount} 个 Task、${preview.sectionCount} 个 Section。确认后替换当前数据，请先导出备份。"
+                    "Import ${preview.categoryCount} categories, ${preview.taskCount} tasks and ${preview.sectionCount} sections. This replaces everything stored now; export a backup first."
                 )
             },
             confirmButton = {
-                TextButton(onClick = { onAction(SettingsAction.OnConfirmRestore) }) { Text("确认导入") }
+                TextButton(onClick = { onAction(SettingsAction.OnConfirmRestore) }) { Text("Import") }
             },
             dismissButton = {
-                TextButton(onClick = { onAction(SettingsAction.OnCancelRestore) }) { Text("取消") }
+                TextButton(onClick = { onAction(SettingsAction.OnCancelRestore) }) { Text("Cancel") }
             },
         )
     }
@@ -103,7 +103,7 @@ fun BackupPage(
             navigationIcon = {
                 GlassIconButton(
                     icon = vectorResource(Res.drawable.nav_arrow_back),
-                    contentDescription = "返回",
+                    contentDescription = "Back",
                     onClick = onNavigateBack,
                     modifier = Modifier.padding(horizontal = 8.dp),
                 )
@@ -122,7 +122,7 @@ fun BackupPage(
                 ),
         ) {
             item {
-                Text("支持 Grit Glass 和 Grhinet 导出的 JSON 备份。备份包含类别、任务和 Section，不包含本机设置。", Modifier.padding(12.dp))
+                Text("Imports JSON backups exported by Grit Glass and Grhinet. A backup holds categories, tasks and sections, not the settings of this device.", Modifier.padding(12.dp))
             }
             state.backupMessage?.let { message ->
                 item {

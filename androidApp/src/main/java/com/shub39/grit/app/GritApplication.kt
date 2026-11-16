@@ -60,12 +60,12 @@ class GritApplication : Application(), KoinComponent {
                     try {
                         scheduler.schedule(task)
                     } catch (e: Exception) {
-                        Log.e("GritGlass", "任务提醒调度失败", e)
+                        Log.e("GritGlass", "Scheduling task reminders failed", e)
                     }
                 }
                 WidgetUpdates.tasks(this@GritApplication)
             } catch (e: Exception) {
-                Log.e("GritGlass", "启动刷新失败", e)
+                Log.e("GritGlass", "Refresh on start failed", e)
             }
         }
 

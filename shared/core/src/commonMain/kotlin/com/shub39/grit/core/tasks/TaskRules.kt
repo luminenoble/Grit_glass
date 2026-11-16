@@ -37,7 +37,7 @@ fun titleColorStops(value: String?): List<Int>? {
 
 fun validateTitleColor(color: String?) {
     require(color == null || titleColorStops(color) != null) {
-        "颜色必须为 #RRGGBB，渐变为 2–$MaxTitleColorStops 个以逗号分隔的 #RRGGBB"
+        "A color must be #RRGGBB; a gradient is 2–$MaxTitleColorStops comma-separated #RRGGBB values"
     }
 }
 
@@ -52,6 +52,6 @@ fun movedIds(ids: List<Long>, id: Long, target: Int): List<Long> {
 
 fun validateReorder(existing: List<Long>, requested: List<Long>) {
     require(requested.size == existing.size && requested.toSet() == existing.toSet()) {
-        "排序数据已变化，请重试"
+        "The order has changed. Please try again"
     }
 }

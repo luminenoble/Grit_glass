@@ -14,6 +14,7 @@
       "Settings: the three day limits that decide card size, the wall text size, and whether priority also tints the card background",
       "Sections are simply done or not done; their completion date is gone. The \"hide completed\" option of categories and the \"reorder after completing\" setting are removed, since completed tasks are always archived",
       "The tasks widget no longer shows completed tasks",
+      "All of the app's own text is English now; labels that were Chinese in 1.0.x have been translated",
       "Backups are now in Grit Glass's own format (version 2). Backups from Grit Glass 1.0.x and from Grhinet can still be imported; Grhinet cannot import backups made by this version"
     ]
   },

@@ -26,6 +26,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
@@ -106,7 +107,7 @@ private val LensShape = RoundedCornerShape(26.dp)
  * in the page rather than in a dialog window, so the glass really samples [backdrop].
  *
  * It answers the things a card is tapped for without opening the editor: tick Sections, finish,
- * suspend, park under "以后再说", and decide about a deadline that has passed or a task that has
+ * suspend, park under "Later", and decide about a deadline that has passed or a task that has
  * sunk. Changes go out through [onUpdate]; [onDismiss] is called once the pane has closed.
  */
 @Composable
@@ -254,7 +255,7 @@ private fun LensContent(
                 overflow = TextOverflow.Ellipsis,
             )
             Text(
-                "优先级 ${task.priority.label()}",
+                "${task.priority.label()} priority",
                 style = MaterialTheme.typography.labelMedium,
                 color = quiet,
             )
@@ -281,20 +282,20 @@ private fun LensContent(
 
         Text(
             when {
-                task.isCompleted -> task.completedDay()?.let { "完成于 ${it.label(today)}" } ?: "已完成"
-                task.isSomeday -> "放在“以后再说”里，${task.idleDays(today)} 天没动"
-                suspended -> "挂起到 ${task.hiddenUntil?.label(today)}"
+                task.isCompleted -> task.completedDay()?.let { "Completed ${it.label(today)}" } ?: "Completed"
+                task.isSomeday -> "Under Later, untouched for ${days(task.idleDays(today))}"
+                suspended -> "Suspended until ${task.hiddenUntil?.label(today)}"
                 task.deadline != null -> {
                     val left = task.daysLeft(today) ?: 0
                     val day = task.deadline?.label(today)
                     when {
-                        left < 0 -> "DDL 是 $day"
-                        left == 0 -> "DDL 是今天"
-                        else -> "DDL 是 $day，还有 $left 天"
+                        left < 0 -> "Deadline was $day"
+                        left == 0 -> "Deadline is today"
+                        else -> "Deadline $day, ${days(left)} left"
                     }
                 }
-                task.idleDays(today) == 0 -> "没有 DDL，今天动过"
-                else -> "没有 DDL，${task.idleDays(today)} 天没动"
+                task.idleDays(today) == 0 -> "No deadline, touched today"
+                else -> "No deadline, untouched for ${days(task.idleDays(today))}"
             },
             style = MaterialTheme.typography.bodySmall,
             color = quiet,
@@ -325,7 +326,7 @@ private fun LensContent(
                                 if (section.isCompleted) Res.drawable.check_circle
                                 else Res.drawable.circle_border
                             ),
-                            contentDescription = if (section.isCompleted) "已完成" else "未完成",
+                            contentDescription = if (section.isCompleted) "Done" else "Not done",
                             modifier = Modifier.size(20.dp),
                             tint = if (section.isCompleted) GlassTokens.Done else quiet,
                         )
@@ -355,24 +356,27 @@ private fun LensContent(
         // A passed deadline or a long silence asks one quiet question; it can simply be left.
         if (overdue || sunk) {
             Text(
-                if (overdue) "这个 DDL 已经过了，接下来怎么办？"
-                else "它已经 ${task.idleDays(today)} 天没动了，还要做吗？",
+                if (overdue) "This deadline has passed. What now?"
+                else "Untouched for ${days(task.idleDays(today))}. Still worth doing?",
                 Modifier.padding(top = 4.dp),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurface,
             )
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
                 if (overdue) {
-                    LensChip("设新 DDL", onClick = onPickDeadline)
-                    LensChip("去掉 DDL", onClick = { onUpdate(task.copy(deadline = null)) })
+                    LensChip("New date", onClick = onPickDeadline)
+                    LensChip("No date", onClick = { onUpdate(task.copy(deadline = null)) })
                 } else {
-                    LensChip("改小一点", onClick = onEdit)
+                    LensChip("Make it smaller", onClick = onEdit)
                     LensChip(
-                        "以后再说",
+                        "Later",
                         onClick = { closeThen { onUpdate(task.copy(isSomeday = true)) } },
                     )
                 }
-                LensChip("放弃", onClick = onAbandon, style = GlassButtonStyle.Danger)
+                LensChip("Give up", onClick = onAbandon, style = GlassButtonStyle.Danger)
             }
         }
 
@@ -380,44 +384,44 @@ private fun LensContent(
             when {
                 task.isCompleted ->
                     LensButton(
-                        "恢复为未完成",
+                        "Reopen",
                         Modifier.weight(1f),
                         style = GlassButtonStyle.Prominent,
                         onClick = { closeThen { onUpdate(task.copy(isCompleted = false)) } },
                     )
                 task.isSomeday ->
                     LensButton(
-                        "放回任务墙",
+                        "Back to the wall",
                         Modifier.weight(1f),
                         style = GlassButtonStyle.Prominent,
                         onClick = { closeThen { onUpdate(task.copy(isSomeday = false)) } },
                     )
                 suspended ->
                     LensButton(
-                        "现在就回来",
+                        "Bring back now",
                         Modifier.weight(1f),
                         style = GlassButtonStyle.Prominent,
                         onClick = { closeThen { onUpdate(task.copy(hiddenUntil = null)) } },
                     )
                 else ->
                     LensButton(
-                        "完成",
+                        "Complete",
                         Modifier.weight(1f),
                         style = GlassButtonStyle.Prominent,
                         icon = Res.drawable.check,
                         onClick = { closeThen { onUpdate(task.copy(isCompleted = true)) } },
                     )
             }
-            LensButton("编辑", Modifier.weight(1f), icon = Res.drawable.edit, onClick = onEdit)
+            LensButton("Edit", Modifier.weight(1f), icon = Res.drawable.edit, onClick = onEdit)
         }
 
         if (onWall) {
             if (!choosingDay)
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    LensButton("挂起", Modifier.weight(1f), onClick = { choosingDay = true })
+                    LensButton("Suspend", Modifier.weight(1f), onClick = { choosingDay = true })
                     if (!sunk)
                         LensButton(
-                            "以后再说",
+                            "Later",
                             Modifier.weight(1f),
                             onClick = { closeThen { onUpdate(task.copy(isSomeday = true)) } },
                         )
@@ -427,15 +431,18 @@ private fun LensContent(
                     closeThen { onUpdate(task.copy(hiddenUntil = day)) }
                 }
                 Text(
-                    "挂起到哪天？到那天它会自己回来。",
+                    "Suspend until when? It comes back by itself on that day.",
                     style = MaterialTheme.typography.bodySmall,
                     color = quiet,
                 )
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    LensChip("明天", onClick = { until(today.plus(1, DateTimeUnit.DAY)) })
-                    LensChip("下周一", onClick = { until(today.nextMonday()) })
-                    LensChip("一个月后", onClick = { until(today.plus(1, DateTimeUnit.MONTH)) })
-                    LensChip("选日期", onClick = onPickSuspendDay)
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    LensChip("Tomorrow", onClick = { until(today.plus(1, DateTimeUnit.DAY)) })
+                    LensChip("Monday", onClick = { until(today.nextMonday()) })
+                    LensChip("In a month", onClick = { until(today.plus(1, DateTimeUnit.MONTH)) })
+                    LensChip("Pick a day", onClick = onPickSuspendDay)
                 }
             }
         }

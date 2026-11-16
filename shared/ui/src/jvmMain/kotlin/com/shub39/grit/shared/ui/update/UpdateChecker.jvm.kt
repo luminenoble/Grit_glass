@@ -19,5 +19,5 @@ package com.shub39.grit.shared.ui.update
 actual fun createUpdateChecker(): UpdateChecker =
     object : UpdateChecker {
         override suspend fun latestRelease(): AppRelease =
-            throw UnsupportedOperationException("更新检查仅在 Android 上可用")
+            throw UnsupportedOperationException("Update checks are only available on Android")
     }

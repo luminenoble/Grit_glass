@@ -177,7 +177,7 @@ fun CategoryUpsertSheet(
                 enabled = !saving,
                 value = newCategory.description,
                 onValueChange = { newCategory = newCategory.copy(description = it) },
-                label = { Text("类别描述") },
+                label = { Text("Category description") },
                 minLines = 3,
                 maxLines = 4,
                 modifier = Modifier.fillMaxWidth(),
@@ -221,7 +221,7 @@ fun CategoryUpsertSheet(
                     else TopAppBarDefaults.topAppBarColors(),
                 actions = {
                     if (pinnedActions) {
-                        TextButton(onClick = onDismiss, enabled = !saving) { Text("取消") }
+                        TextButton(onClick = onDismiss, enabled = !saving) { Text("Cancel") }
                         TextButton(
                             onClick = {
                                 onUpsertCategory(
@@ -230,7 +230,7 @@ fun CategoryUpsertSheet(
                             },
                             enabled = !saving && textFieldState.text.isNotBlank(),
                         ) {
-                            Text(if (saving) "保存中…" else "保存")
+                            Text(if (saving) "Saving…" else "Save")
                         }
                     }
                 },
@@ -247,7 +247,7 @@ fun CategoryUpsertSheet(
                 navigationIcon = {
                     GlassIconButton(
                         icon = vectorResource(Res.drawable.nav_arrow_back),
-                        contentDescription = "返回",
+                        contentDescription = "Back",
                         onClick = onDismiss,
                         enabled = !saving,
                         modifier = Modifier.padding(horizontal = 8.dp),

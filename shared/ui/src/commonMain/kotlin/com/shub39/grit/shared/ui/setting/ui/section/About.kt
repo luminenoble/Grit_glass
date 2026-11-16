@@ -95,7 +95,7 @@ fun About(versionName: String, onNavigateBack: () -> Unit, modifier: Modifier = 
                 navigationIcon = {
                     GlassIconButton(
                         icon = vectorResource(Res.drawable.nav_arrow_back),
-                        contentDescription = "返回",
+                        contentDescription = "Back",
                         onClick = onNavigateBack,
                         modifier = Modifier.padding(horizontal = 8.dp),
                     )
@@ -155,7 +155,7 @@ private fun LazyListScope.engagementLinks(uriHandler: UriHandler) {
                         contentDescription = null,
                     )
                 },
-                headlineContent = { Text(text = "定制版 GitHub 仓库") },
+                headlineContent = { Text(text = "This fork on GitHub") },
                 supportingContent = { Text(text = UPDATE_REPO) },
                 modifier =
                     Modifier.clip(leadingItemShape()).clickable {
@@ -177,7 +177,7 @@ private fun LazyListScope.engagementLinks(uriHandler: UriHandler) {
                         contentDescription = null,
                     )
                 },
-                headlineContent = { Text(text = "原版 GitHub 仓库") },
+                headlineContent = { Text(text = "Original Grit on GitHub") },
                 supportingContent = { Text(text = "shub39/Grit") },
                 modifier =
                     Modifier.clip(middleItemShape()).clickable {

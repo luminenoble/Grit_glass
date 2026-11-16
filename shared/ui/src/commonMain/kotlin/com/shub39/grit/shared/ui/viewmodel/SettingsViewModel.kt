@@ -109,7 +109,7 @@ class SettingsViewModel(
                     } catch (e: Exception) {
                         _state.update {
                             it.copy(
-                                backupMessage = e.message ?: "导出失败",
+                                backupMessage = e.message ?: "Export failed",
                                 backupState = it.backupState.copy(exportState = IDLE),
                             )
                         }
@@ -138,7 +138,7 @@ class SettingsViewModel(
                         } catch (e: Exception) {
                             _state.update {
                                 it.copy(
-                                    backupMessage = e.message ?: "无效的备份文件",
+                                    backupMessage = e.message ?: "Invalid backup file",
                                     backupState = it.backupState.copy(restoreState = FAILURE),
                                 )
                             }
@@ -218,7 +218,7 @@ class SettingsViewModel(
                             else -> UpdateCheckState.UpToDate(current)
                         }
                     },
-                    onFailure = { UpdateCheckState.Failed(it.message ?: "检查更新失败") },
+                    onFailure = { UpdateCheckState.Failed(it.message ?: "Update check failed") },
                 )
 
         _state.update { it.copy(updateCheck = result) }

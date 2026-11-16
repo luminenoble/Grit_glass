@@ -200,10 +200,10 @@ fun OverviewScreen(
                 onView = { view = it },
                 summary =
                     when (view) {
-                        OverviewView.Wall -> "$wallCount 件在墙上"
+                        OverviewView.Wall -> "$wallCount on the wall"
                         OverviewView.Later ->
-                            "${someday.size} 件以后再说，${suspended.size} 件挂起中"
-                        OverviewView.Done -> "${done.size} 件已完成"
+                            "${someday.size} later, ${suspended.size} suspended"
+                        OverviewView.Done -> "${done.size} completed"
                     },
             )
 
@@ -228,9 +228,9 @@ fun OverviewScreen(
                             onTap = onTap,
                             onHold = onHold,
                             overdueChoices = { task ->
-                                PaperChip("设新 DDL") { dayRequest = DayRequest.Deadline(task) }
-                                PaperChip("去掉 DDL") { update(task.copy(deadline = null)) }
-                                PaperChip("放弃", ink = GlassTokens.Danger) { abandoning = task }
+                                PaperChip("New date") { dayRequest = DayRequest.Deadline(task) }
+                                PaperChip("No date") { update(task.copy(deadline = null)) }
+                                PaperChip("Give up", ink = GlassTokens.Danger) { abandoning = task }
                             },
                         )
                     OverviewView.Later ->
@@ -240,11 +240,11 @@ fun OverviewScreen(
                             onTap = onTap,
                             onHold = onHold,
                             empty =
-                                "这里没有任务。暂时不做的任务可以转入“以后再说”，或者挂起到某一天；它们会离开 Task 页和任务墙，留在这里。",
+                                "Nothing here. Tasks you are not doing for now can go under Later or be suspended until a day; they leave the Task page and the wall and stay here.",
                             groups =
                                 listOf(
-                                    TileGroup("以后再说", someday) { null },
-                                    TileGroup("挂起中", suspended) {
+                                    TileGroup("Later", someday) { null },
+                                    TileGroup("Suspended", suspended) {
                                         it.hiddenUntil?.label(today)
                                     },
                                 ),
@@ -255,7 +255,7 @@ fun OverviewScreen(
                             categoryOf = categoryOf,
                             onTap = onTap,
                             onHold = onHold,
-                            empty = "还没有完成的任务。任务完成后会归档到这里。",
+                            empty = "No completed tasks yet. Tasks are archived here when you complete them.",
                             groups =
                                 listOf(TileGroup(null, done) { it.completedDay()?.label(today) }),
                             header =
@@ -267,7 +267,7 @@ fun OverviewScreen(
                                             style = GlassButtonStyle.Danger,
                                             enabled = !state.saving,
                                         ) {
-                                            Text("删除已完成")
+                                            Text("Delete completed")
                                         }
                                     }
                                 },
@@ -337,8 +337,8 @@ fun OverviewScreen(
     abandoning?.let { task ->
         GlassAlertDialog(
             onDismissRequest = { abandoning = null },
-            title = { Text("放弃这个任务") },
-            text = { Text("「${task.title}」会被删除，不能恢复。") },
+            title = { Text("Give up this task") },
+            text = { Text("“${task.title}” will be deleted. This cannot be undone.") },
             confirmButton = {
                 TextButton(
                     enabled = !state.saving,
@@ -348,18 +348,18 @@ fun OverviewScreen(
                         peek = null
                     },
                 ) {
-                    Text("放弃", color = GlassTokens.Danger)
+                    Text("Give up", color = GlassTokens.Danger)
                 }
             },
-            dismissButton = { TextButton(onClick = { abandoning = null }) { Text("留着") } },
+            dismissButton = { TextButton(onClick = { abandoning = null }) { Text("Keep") } },
         )
     }
 
     if (clearingArchive)
         GlassAlertDialog(
             onDismissRequest = { clearingArchive = false },
-            title = { Text("删除已完成") },
-            text = { Text("全部 ${state.completedTasks.size} 件已完成的任务会被删除，不能恢复。") },
+            title = { Text("Delete completed") },
+            text = { Text("All ${state.completedTasks.size} completed tasks will be deleted. This cannot be undone.") },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -367,10 +367,10 @@ fun OverviewScreen(
                         clearingArchive = false
                     }
                 ) {
-                    Text("删除", color = GlassTokens.Danger)
+                    Text("Delete", color = GlassTokens.Danger)
                 }
             },
-            dismissButton = { TextButton(onClick = { clearingArchive = false }) { Text("取消") } },
+            dismissButton = { TextButton(onClick = { clearingArchive = false }) { Text("Cancel") } },
         )
 }
 
@@ -406,9 +406,9 @@ private fun OverviewTopBar(
                     onSelect = onView,
                     label = {
                         when (it) {
-                            OverviewView.Wall -> "任务墙"
-                            OverviewView.Later -> "以后再说"
-                            OverviewView.Done -> "已完成"
+                            OverviewView.Wall -> "Wall"
+                            OverviewView.Later -> "Later"
+                            OverviewView.Done -> "Done"
                         }
                     },
                     modifier = Modifier.padding(end = 12.dp),
@@ -433,7 +433,7 @@ private fun CategoryFilter(categories: List<Category>, selected: Long?, onSelect
     ) {
         item(key = "all") {
             CategoryToggleButton(checked = selected == null, onCheckedChange = { onSelect(null) }) {
-                Text("全部")
+                Text("All")
             }
         }
         items(categories, key = { it.id }) { category ->
@@ -517,7 +517,7 @@ private fun TaskWall(
             verticalArrangement = Arrangement.spacedBy(WallMetrics.Gap),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            if (bands.isEmpty()) item { EmptyNote("墙上是空的。在 Task 页添加任务后，它们会按 DDL 和优先级排在这里。") }
+            if (bands.isEmpty()) item { EmptyNote("The wall is empty. Tasks you add on the Task page are laid out here by deadline and priority.") }
             items(
                 bands,
                 key = {
@@ -529,7 +529,7 @@ private fun TaskWall(
                 contentType = { it is WallBand.Cards },
             ) { band ->
                 when (band) {
-                    WallBand.NoDeadline -> WallLabel("没有 DDL", Modifier.width(grid.width))
+                    WallBand.NoDeadline -> WallLabel("No deadline", Modifier.width(grid.width))
                     is WallBand.Cards ->
                         Box(
                             Modifier.width(grid.width)
@@ -562,7 +562,7 @@ private fun TaskWall(
                                                     WallMetrics.Row * card.rows +
                                                         WallMetrics.Gap * (card.rows - 1),
                                                 ),
-                                        // Below the "没有 DDL" line a card counts the days since
+                                        // Below the "No deadline" line a card counts the days since
                                         // it was worked on; above it, the days it has left.
                                         meta =
                                             if (task.deadline != null) task.deadlineLabel(today)
@@ -665,7 +665,7 @@ private fun LazyListScope.tileRows(
     }
 }
 
-/** A full-width label row on the wall, such as "没有 DDL": a name and a hairline. */
+/** A full-width label row on the wall, such as "No deadline": a name and a hairline. */
 @Composable
 private fun WallLabel(text: String, modifier: Modifier = Modifier) {
     Row(

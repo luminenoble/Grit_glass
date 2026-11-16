@@ -54,7 +54,7 @@ class WidgetDateReceiver : BroadcastReceiver(), KoinComponent {
                         try {
                             scheduler.schedule(task)
                         } catch (e: Exception) {
-                            Log.e("WidgetDateReceiver", "时间变化后调度任务提醒失败", e)
+                            Log.e("WidgetDateReceiver", "Scheduling task reminders after a time change failed", e)
                         }
                     }
                 }

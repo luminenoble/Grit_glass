@@ -156,14 +156,14 @@ fun RootPage(
                         Text(
                             text =
                                 when (val check = state.updateCheck) {
-                                    UpdateCheckState.Idle -> "从 $UPDATE_REPO 检查新版本"
-                                    UpdateCheckState.Checking -> "检查中…"
+                                    UpdateCheckState.Idle -> "Look for a new version in $UPDATE_REPO"
+                                    UpdateCheckState.Checking -> "Checking…"
                                     is UpdateCheckState.UpToDate ->
-                                        "已是最新版本 ${check.versionName}".trim()
-                                    UpdateCheckState.NoReleases -> "$UPDATE_REPO 暂无已发布版本"
+                                        "Up to date: ${check.versionName}".trim()
+                                    UpdateCheckState.NoReleases -> "$UPDATE_REPO has no releases yet"
                                     is UpdateCheckState.Available ->
-                                        "发现新版本 ${check.release.versionName}"
-                                    is UpdateCheckState.Failed -> "检查失败：${check.message}"
+                                        "New version ${check.release.versionName} available"
+                                    is UpdateCheckState.Failed -> "Check failed: ${check.message}"
                                 }
                         )
                     },
@@ -177,7 +177,7 @@ fun RootPage(
                             )
                         }
                     },
-                    headlineContent = { Text(text = "检查更新") },
+                    headlineContent = { Text(text = "Check for updates") },
                     modifier =
                         Modifier.glassItem(detachedItemShape()).clickable(
                             enabled = state.updateCheck !is UpdateCheckState.Checking
@@ -226,7 +226,7 @@ fun RootPage(
                         colors = glassListItemColors(),
                     )
                     ListItem(
-                        headlineContent = { Text("启动页面") },
+                        headlineContent = { Text("Start page") },
                         supportingContent = {
                             GlassSegmented(
                                 options = Sections.entries,
@@ -235,7 +235,7 @@ fun RootPage(
                                 label = { page ->
                                     when (page) {
                                         Sections.Tasks -> "Task"
-                                        Sections.Overview -> "总览"
+                                        Sections.Overview -> "Overview"
                                         Sections.Settings -> "Setting"
                                     }
                                 },
@@ -402,10 +402,10 @@ private fun thresholdsOf(days: List<String>): WallThresholds? {
 private fun WallSettingsGroup(wall: WallSettings, onChange: (WallSettings) -> Unit) {
     GlassGroup {
         ListItem(
-            headlineContent = { Text("任务墙卡片大小") },
+            headlineContent = { Text("Wall card size") },
             supportingContent = {
                 Column {
-                    Text("离 DDL 越近，卡片越大。超过最后一档或没有 DDL 的任务用最小的卡片。")
+                    Text("The closer the deadline, the larger the card. Tasks beyond the last limit, or without a deadline, get the smallest card.")
                     // Typing passes through states that are not valid yet (a ≥ b); those stay in
                     // the fields and are saved once the three days rise again.
                     var days by
@@ -417,7 +417,7 @@ private fun WallSettingsGroup(wall: WallSettings, onChange: (WallSettings) -> Un
                         Modifier.padding(top = 8.dp),
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
-                        listOf("最大", "大", "中").forEachIndexed { i, size ->
+                        listOf("Largest", "Large", "Medium").forEachIndexed { i, size ->
                             OutlinedTextField(
                                 value = days[i],
                                 onValueChange = { text ->
@@ -430,7 +430,7 @@ private fun WallSettingsGroup(wall: WallSettings, onChange: (WallSettings) -> Un
                                         onChange(wall.copy(thresholds = next))
                                 },
                                 label = { Text(size) },
-                                suffix = { Text("天内") },
+                                suffix = { Text("days") },
                                 singleLine = true,
                                 isError = typed?.isValid != true,
                                 keyboardOptions =
@@ -442,7 +442,7 @@ private fun WallSettingsGroup(wall: WallSettings, onChange: (WallSettings) -> Un
                     }
                     if (typed?.isValid != true)
                         Text(
-                            "三个天数都要大于 0，并且从左到右越来越大。改对之后才会保存。",
+                            "All three must be above 0 and grow from left to right. They are saved once they are valid.",
                             Modifier.padding(top = 6.dp),
                             color = MaterialTheme.colorScheme.error,
                         )
@@ -451,7 +451,7 @@ private fun WallSettingsGroup(wall: WallSettings, onChange: (WallSettings) -> Un
             colors = glassListItemColors(),
         )
         ListItem(
-            headlineContent = { Text("任务墙字号") },
+            headlineContent = { Text("Wall text size") },
             supportingContent = {
                 val labels =
                     mapOf(
@@ -470,18 +470,18 @@ private fun WallSettingsGroup(wall: WallSettings, onChange: (WallSettings) -> Un
             colors = glassListItemColors(),
         )
         ListItem(
-            headlineContent = { Text("重要度显示") },
+            headlineContent = { Text("Show priority with") },
             supportingContent = {
                 Column {
-                    Text("优先级越低，卡片上这些部分越淡。")
+                    Text("The lower the priority, the fainter these parts of a card.")
                     GlassSegmented(
                         options = ImportanceDisplay.entries,
                         selected = wall.importance,
                         onSelect = { onChange(wall.copy(importance = it)) },
                         label = {
                             when (it) {
-                                ImportanceDisplay.TITLE_AND_BORDER -> "标题与边框"
-                                ImportanceDisplay.WITH_BACKGROUND -> "标题、边框与底色"
+                                ImportanceDisplay.TITLE_AND_BORDER -> "Title & border"
+                                ImportanceDisplay.WITH_BACKGROUND -> "With background"
                             }
                         },
                         modifier = Modifier.padding(top = 6.dp),

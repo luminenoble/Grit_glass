@@ -187,7 +187,7 @@ class TasksViewModel(
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: Exception) {
-                    mutable.update { it.copy(error = e.message ?: "保存失败，请重试") }
+                    mutable.update { it.copy(error = e.message ?: "Could not save. Please try again") }
                 } finally {
                     pendingWrites--
                     mutable.update { it.copy(saving = pendingWrites > 0) }

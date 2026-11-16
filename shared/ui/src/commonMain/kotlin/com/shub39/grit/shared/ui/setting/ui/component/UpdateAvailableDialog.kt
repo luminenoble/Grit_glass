@@ -74,11 +74,11 @@ fun UpdateAvailableDialog(
             Spacer(modifier = Modifier.height(4.dp))
 
             Text(
-                text = "发现新版本",
+                text = "New version available",
                 style = MaterialTheme.typography.headlineSmall.copy(fontFamily = flexFontEmphasis()),
             )
             Text(
-                text = "${release.title}（当前 ${currentVersion.ifBlank { "未知版本" }}）",
+                text = "${release.title} (current: ${currentVersion.ifBlank { "unknown" }})",
                 style =
                     MaterialTheme.typography.bodyLarge.copy(
                         color = MaterialTheme.colorScheme.primary
@@ -103,7 +103,7 @@ fun UpdateAvailableDialog(
                             pressedShape = MaterialTheme.shapes.small,
                         ),
                 ) {
-                    Text(text = "稍后")
+                    Text(text = "Later")
                 }
 
                 TextButton(
@@ -114,7 +114,7 @@ fun UpdateAvailableDialog(
                             pressedShape = MaterialTheme.shapes.small,
                         ),
                 ) {
-                    Text(text = "前往下载")
+                    Text(text = "Download")
                 }
             }
         }

@@ -64,7 +64,7 @@ class RestoreRepoStub : RestoreRepo {
 
     override suspend fun restoreData(
         backup: com.shub39.grit.core.settings.backup.TaskBackup
-    ): RestoreResult = RestoreResult.Failure("Demo 不支持文件导入")
+    ): RestoreResult = RestoreResult.Failure("The demo cannot import files")
 }
 
 @Single(binds = [BiometricUtils::class])

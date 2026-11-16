@@ -52,7 +52,7 @@ private val overviewConfiguration = SavedStateConfiguration {
     }
 }
 
-/** The 总览 tab: the task wall, what is shelved for later, and the archive. */
+/** The Overview tab: the task wall, what is shelved for later, and the archive. */
 @Composable
 fun OverviewPage(state: TaskState, onAction: (TaskAction) -> Unit) {
     val backStack = rememberNavBackStack(overviewConfiguration, OverviewRoutes.Cards)

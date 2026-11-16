@@ -163,7 +163,7 @@ fun TaskList(
         )
 
         if (state.tasks.isEmpty()) {
-            Text("新增一个类别开始记录，或在设置中导入 Grit Glass / Grhinet 的备份。", Modifier.padding(16.dp))
+            Text("Add a category to get started, or import a Grit Glass / Grhinet backup in Settings.", Modifier.padding(16.dp))
         }
 
         CategorySelector(
@@ -278,7 +278,7 @@ private fun TaskListTopBar(
             ) {
                 GlassIconButton(
                     icon = vectorResource(Res.drawable.reorder),
-                    contentDescription = "调整顺序",
+                    contentDescription = "Reorder",
                     onClick = { onReorderToggle(!isReorderMode) },
                     checked = isReorderMode,
                     enabled = shown.isNotEmpty(),
@@ -606,7 +606,7 @@ private fun ExpandedTasksView(
 
                             GlassIconButton(
                                 icon = vectorResource(Res.drawable.reorder),
-                                contentDescription = "调整顺序",
+                                contentDescription = "Reorder",
                                 onClick = { showReorderDialog = !showReorderDialog },
                                 checked = showReorderDialog,
                                 enabled = !isTodayPanel && displayTasks.size > 1,
@@ -768,7 +768,7 @@ private fun ExpandedTasksView(
     }
 }
 
-/** Switch beside "调整顺序": while it is on, tapping a task card completes the task. */
+/** Switch beside "Reorder": while it is on, tapping a task card completes the task. */
 @Composable
 private fun CompleteModeButton(
     checked: Boolean,
@@ -778,7 +778,7 @@ private fun CompleteModeButton(
 ) {
     GlassIconButton(
         icon = vectorResource(Res.drawable.check_circle),
-        contentDescription = "点按任务卡完成任务",
+        contentDescription = "Tap a task to complete it",
         onClick = { onCheckedChange(!checked) },
         checked = checked,
         enabled = enabled,

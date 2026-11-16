@@ -53,7 +53,7 @@ data class Task(
     val completedAt: Instant? = null,
     /** Suspended until this day: off the Task page and the wall before it. */
     val hiddenUntil: LocalDate? = null,
-    /** Parked without a date; only listed under "以后再说". */
+    /** Parked without a date; only listed under "Later". */
     val isSomeday: Boolean = false,
 ) {
     fun isSuspended(today: LocalDate): Boolean = hiddenUntil != null && hiddenUntil > today

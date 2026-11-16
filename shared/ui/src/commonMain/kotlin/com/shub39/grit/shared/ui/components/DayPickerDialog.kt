@@ -63,10 +63,10 @@ fun DayPickerDialog(
                     }
                 },
             ) {
-                Text("确定")
+                Text("OK")
             }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("取消") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
     ) {
         DatePicker(state = state)
     }
