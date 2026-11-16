@@ -60,7 +60,7 @@ import kotlin.math.ceil
 import kotlin.math.min
 
 /**
- * Liquid glass material, see docs/项目概览.md §4.
+ * Liquid glass material, see docs/项目概览.md §5.
  *
  * Glass is the control layer floating above paper content; content itself stays opaque. A glass
  * surface is described by light rather than fill:

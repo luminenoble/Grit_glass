@@ -24,7 +24,7 @@ import android.text.TextUtils
 import android.text.style.ForegroundColorSpan
 
 /**
- * A Task title coloured for a widget (docs/项目概览.md §5). Glance text takes no gradient brush, so
+ * A Task title coloured for a widget (docs/项目概览.md §6). Glance text takes no gradient brush, so
  * every glyph gets its own colour from where its centre falls across the widest line, as the Task
  * page's gradient runs across the title. [stops] are ARGB colours; with fewer than two the title is
  * returned as it is and the caller sets the solid colour. Laid out with [paint] in [widthPx] over

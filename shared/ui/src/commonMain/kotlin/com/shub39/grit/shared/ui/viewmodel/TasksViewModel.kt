@@ -19,12 +19,14 @@ package com.shub39.grit.shared.ui.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.shub39.grit.core.interfaces.*
+import com.shub39.grit.core.now
 import com.shub39.grit.core.tasks.*
 import com.shub39.grit.shared.ui.task.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.datetime.LocalDate
 import org.koin.core.annotation.*
 
 @KoinViewModel
@@ -45,33 +47,56 @@ class TasksViewModel(
                 .map { it > 0 }
                 .distinctUntilChanged()
                 .collectLatest { visible ->
-                    if (visible)
+                    if (visible) {
+                        val today = LocalDate.now()
+                        mutable.update { it.copy(today = today) }
+                        startDay(today)
                         repo.getTasksFlow().collect { data ->
                             mutable.update { old ->
                                 old.copy(
                                     tasks = data,
-                                    completedTasks =
-                                        data.values.flatten().filter { it.isCompleted },
                                     currentCategory =
                                         data.keys.firstOrNull { it.id == old.currentCategory?.id }
                                             ?: data.keys.firstOrNull(),
                                 )
                             }
                         }
+                    }
                 }
         }
         viewModelScope.launch {
-            combine(datastore.getIs24Hr(), datastore.getTaskReorderPref()) { hours, reorder ->
-                    hours to reorder
+            combine(datastore.getIs24Hr(), datastore.getWallSettingsFlow()) { hours, wall ->
+                    hours to wall
                 }
-                .collect { (hours, reorder) ->
-                    mutable.update { it.copy(is24Hour = hours, reorderTasks = reorder) }
+                .collect { (hours, wall) ->
+                    mutable.update { it.copy(is24Hour = hours, wall = wall) }
                 }
         }
         viewModelScope.launch { repo.getTasks().forEach { scheduler.schedule(it) } }
     }
 
+    /**
+     * First showing of the app on a new day: yesterday's Today list goes back to its categories,
+     * silently. Nothing is counted and nothing is marked late.
+     */
+    private suspend fun startDay(today: LocalDate) {
+        try {
+            val last = datastore.getLastOpenedOn()
+            if (last == today) return
+            if (last != null && last < today) repo.clearToday()
+            datastore.setLastOpenedOn(today)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (_: Exception) {
+            // Retried the next time the app is shown.
+        }
+    }
+
     fun onAction(action: TaskAction) {
+        if (action is TaskAction.DismissArchived) {
+            mutable.update { it.copy(archived = null) }
+            return
+        }
         if (action is TaskAction.ClearError) {
             mutable.update { it.copy(error = null) }
             return
@@ -93,8 +118,20 @@ class TasksViewModel(
                 try {
                     when (action) {
                         is TaskAction.UpsertTask -> {
-                            repo.upsertTask(action.task)
+                            val before =
+                                mutable.value.allTasks.firstOrNull { it.id == action.task.id }
+                            val id = repo.upsertTask(action.task)
+                            // Completing archives the task at once; offer to take it back.
+                            if (action.task.isCompleted && before?.isCompleted == false)
+                                mutable.update { it.copy(archived = action.task.copy(id = id)) }
                             action.onSaved?.invoke()
+                        }
+                        is TaskAction.UndoArchive -> {
+                            val archived = mutable.value.archived
+                            mutable.update { it.copy(archived = null) }
+                            archived
+                                ?.let { repo.getTaskById(it.id) }
+                                ?.let { repo.upsertTask(it.copy(isCompleted = false)) }
                         }
                         is TaskAction.AddCategory -> {
                             val id = repo.upsertCategory(action.category)

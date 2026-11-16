@@ -17,6 +17,7 @@
 package com.shub39.grit.shared.ui.setting
 
 import com.shub39.grit.core.settings.Sections
+import com.shub39.grit.core.settings.WallSettings
 import com.shub39.grit.core.settings.WidgetTextSize
 import com.shub39.grit.core.theme.Fonts
 
@@ -37,7 +38,7 @@ sealed interface SettingsAction {
 
     data class ChangePauseNotifications(val pref: Boolean) : SettingsAction
 
-    data class ChangeReorderTasks(val pref: Boolean) : SettingsAction
+    data class ChangeWallSettings(val settings: WallSettings) : SettingsAction
 
     data class ChangeFontPref(val font: Fonts) : SettingsAction
 

@@ -18,6 +18,13 @@ package com.shub39.grit.shared.ui.setting.ui.section
 
 import com.shub39.grit.shared.ui.theme.LocalFloatingBarInset
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.ui.text.input.KeyboardType
+import com.shub39.grit.core.settings.ImportanceDisplay
+import com.shub39.grit.core.settings.WallSettings
+import com.shub39.grit.core.settings.WallTextSize
+import com.shub39.grit.core.tasks.WallThresholds
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -199,19 +206,6 @@ fun RootPage(
                         colors = glassListItemColors(),
                     )
                     ListItem(
-                        headlineContent = { Text(stringResource(Res.string.reorder_tasks)) },
-                        supportingContent = { Text(stringResource(Res.string.reorder_tasks_desc)) },
-                        trailingContent = {
-                            ExpressiveSwitch(
-                                checked = state.reorderTasks,
-                                onCheckedChange = {
-                                    onAction(SettingsAction.ChangeReorderTasks(it))
-                                },
-                            )
-                        },
-                        colors = glassListItemColors(),
-                    )
-                    ListItem(
                         headlineContent = { Text(stringResource(Res.string.widget_text_size)) },
                         supportingContent = {
                             Column {
@@ -241,6 +235,7 @@ fun RootPage(
                                 label = { page ->
                                     when (page) {
                                         Sections.Tasks -> "Task"
+                                        Sections.Overview -> "总览"
                                         Sections.Settings -> "Setting"
                                     }
                                 },
@@ -275,6 +270,9 @@ fun RootPage(
                     )
                 }
             }
+
+            // The task wall
+            item { WallSettingsGroup(state.wall) { onAction(SettingsAction.ChangeWallSettings(it)) } }
 
             // look and feel customizations
             item {
@@ -390,6 +388,108 @@ fun RootPage(
                 onDismissRequest = { onAction(SettingsAction.OnDismissUpdateResult) },
             )
         }
+    }
+}
+
+/** The three day counts as typed, or null while any of them is not a number. */
+private fun thresholdsOf(days: List<String>): WallThresholds? {
+    val (a, b, c) = days.map { it.toIntOrNull() ?: return null }
+    return WallThresholds(a, b, c)
+}
+
+/** How the task wall sizes and shades its cards. */
+@Composable
+private fun WallSettingsGroup(wall: WallSettings, onChange: (WallSettings) -> Unit) {
+    GlassGroup {
+        ListItem(
+            headlineContent = { Text("任务墙卡片大小") },
+            supportingContent = {
+                Column {
+                    Text("离 DDL 越近，卡片越大。超过最后一档或没有 DDL 的任务用最小的卡片。")
+                    // Typing passes through states that are not valid yet (a ≥ b); those stay in
+                    // the fields and are saved once the three days rise again.
+                    var days by
+                        remember(wall.thresholds) {
+                            mutableStateOf(wall.thresholds.run { listOf(a, b, c) }.map { "$it" })
+                        }
+                    val typed = thresholdsOf(days)
+                    Row(
+                        Modifier.padding(top = 8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        listOf("最大", "大", "中").forEachIndexed { i, size ->
+                            OutlinedTextField(
+                                value = days[i],
+                                onValueChange = { text ->
+                                    days =
+                                        days.toMutableList().also {
+                                            it[i] = text.filter(Char::isDigit).take(4)
+                                        }
+                                    val next = thresholdsOf(days)
+                                    if (next != null && next.isValid && next != wall.thresholds)
+                                        onChange(wall.copy(thresholds = next))
+                                },
+                                label = { Text(size) },
+                                suffix = { Text("天内") },
+                                singleLine = true,
+                                isError = typed?.isValid != true,
+                                keyboardOptions =
+                                    KeyboardOptions(keyboardType = KeyboardType.Number),
+                                shape = MaterialTheme.shapes.medium,
+                                modifier = Modifier.weight(1f),
+                            )
+                        }
+                    }
+                    if (typed?.isValid != true)
+                        Text(
+                            "三个天数都要大于 0，并且从左到右越来越大。改对之后才会保存。",
+                            Modifier.padding(top = 6.dp),
+                            color = MaterialTheme.colorScheme.error,
+                        )
+                }
+            },
+            colors = glassListItemColors(),
+        )
+        ListItem(
+            headlineContent = { Text("任务墙字号") },
+            supportingContent = {
+                val labels =
+                    mapOf(
+                        WallTextSize.SMALL to stringResource(Res.string.text_size_small),
+                        WallTextSize.MEDIUM to stringResource(Res.string.text_size_medium),
+                        WallTextSize.LARGE to stringResource(Res.string.text_size_large),
+                    )
+                GlassSegmented(
+                    options = WallTextSize.entries,
+                    selected = wall.textSize,
+                    onSelect = { onChange(wall.copy(textSize = it)) },
+                    label = { labels.getValue(it) },
+                    modifier = Modifier.padding(top = 6.dp),
+                )
+            },
+            colors = glassListItemColors(),
+        )
+        ListItem(
+            headlineContent = { Text("重要度显示") },
+            supportingContent = {
+                Column {
+                    Text("优先级越低，卡片上这些部分越淡。")
+                    GlassSegmented(
+                        options = ImportanceDisplay.entries,
+                        selected = wall.importance,
+                        onSelect = { onChange(wall.copy(importance = it)) },
+                        label = {
+                            when (it) {
+                                ImportanceDisplay.TITLE_AND_BORDER -> "标题与边框"
+                                ImportanceDisplay.WITH_BACKGROUND -> "标题、边框与底色"
+                            }
+                        },
+                        modifier = Modifier.padding(top = 6.dp),
+                    )
+                }
+            },
+            colors = glassListItemColors(),
+        )
     }
 }
 

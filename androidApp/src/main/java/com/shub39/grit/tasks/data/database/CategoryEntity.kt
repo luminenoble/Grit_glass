@@ -26,7 +26,6 @@ data class CategoryEntity(
     val description: String,
     val orderIndex: Int,
     val titleColor: String?,
-    val hideCompleted: Boolean,
     val createdAt: Instant,
     val updatedAt: Instant,
 )

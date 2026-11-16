@@ -18,8 +18,17 @@ package com.shub39.grit.core.tasks
 
 import kotlin.time.Clock
 import kotlin.time.Instant
+import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.serialization.Serializable
+
+/** How much a task matters; stored as its ordinal (0 / 1 / 2). Shown on the wall as fading. */
+@Serializable
+enum class Priority {
+    LOW,
+    NORMAL,
+    HIGH,
+}
 
 @Serializable
 data class Task(
@@ -35,4 +44,36 @@ data class Task(
     val createdAt: Instant = Clock.System.now(),
     val updatedAt: Instant = createdAt,
     val sections: List<Section> = emptyList(),
-)
+    /** Due day; null when the task has none. Decides the card size on the wall. */
+    val deadline: LocalDate? = null,
+    val priority: Priority = Priority.NORMAL,
+    /** Last time the task was worked on, see [touches]. Set by the repository. */
+    val lastTouchedAt: Instant = updatedAt,
+    /** When the task was completed and archived; null while open. Set by the repository. */
+    val completedAt: Instant? = null,
+    /** Suspended until this day: off the Task page and the wall before it. */
+    val hiddenUntil: LocalDate? = null,
+    /** Parked without a date; only listed under "以后再说". */
+    val isSomeday: Boolean = false,
+) {
+    fun isSuspended(today: LocalDate): Boolean = hiddenUntil != null && hiddenUntil > today
+
+    /** Open and in play: listed on the Task page and placed on the wall. */
+    fun isActive(today: LocalDate): Boolean = !isCompleted && !isSomeday && !isSuspended(today)
+}
+
+/**
+ * Whether saving [next] over [previous] counts as working on the task: its title, description,
+ * Sections, deadline or priority changed, or it was added to Today. Opening it, reordering,
+ * completing, suspending and recolouring do not.
+ */
+fun touches(previous: Task?, next: Task): Boolean {
+    if (previous == null) return true
+    fun List<Section>.work() = map { listOf(it.id, it.title, it.content, it.isCompleted) }
+    return previous.title != next.title ||
+        previous.description != next.description ||
+        previous.deadline != next.deadline ||
+        previous.priority != next.priority ||
+        (next.isToday && !previous.isToday) ||
+        previous.sections.work() != next.sections.work()
+}

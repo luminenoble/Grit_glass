@@ -18,7 +18,6 @@ package com.shub39.grit.tasks.data.database
 
 import androidx.room3.*
 import kotlin.time.Instant
-import kotlinx.datetime.LocalDate
 
 @Entity(
     tableName = "sections",
@@ -39,9 +38,9 @@ data class SectionEntity(
     val title: String,
     val content: String,
     val orderIndex: Int,
-    val completedOn: LocalDate?,
+    val isCompleted: Boolean,
     val createdAt: Instant,
     val updatedAt: Instant,
-    /** Added in schema v3; null is the default colour. */
+    /** Null is the default colour. */
     @ColumnInfo(defaultValue = "NULL") val titleColor: String? = null,
 )

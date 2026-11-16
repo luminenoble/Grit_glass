@@ -125,10 +125,8 @@ class AllTasksWidget : GlanceAppWidget(), KoinComponent {
                     SCOPE_TODAY -> tasks.mapValues { entry -> entry.value.filter { it.isToday } }
                     else -> tasks.filterKeys { it.id == widgetScope }
                 }
-                // Categories flagged hideCompleted keep their done tasks out of the widget too.
-                .mapValues { (category, list) ->
-                    if (category.hideCompleted) list.filter { !it.isCompleted } else list
-                }
+                // Completed tasks are archived: the widget never lists them.
+                .mapValues { (_, list) -> list.filter { !it.isCompleted } }
             val title =
                 when (widgetScope) {
                     SCOPE_ALL -> "Tasks"
@@ -217,7 +215,7 @@ class AllTasksWidget : GlanceAppWidget(), KoinComponent {
 }
 
 /**
- * One task row (docs/项目概览.md §5): the title in its stored colour (gradients included) on the
+ * One task row (docs/项目概览.md §6): the title in its stored colour (gradients included) on the
  * glass background, in one layout of our own; no step count. Glance text takes no gradient brush,
  * so the title is a TextView whose glyphs each carry their share of it; and Glance misplaces a
  * RemoteViews nested inside its own background container, so the whole row is ours. The launcher

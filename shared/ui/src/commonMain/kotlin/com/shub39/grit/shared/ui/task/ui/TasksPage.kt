@@ -16,7 +16,6 @@
  */
 package com.shub39.grit.shared.ui.task.ui
 
-import com.shub39.grit.shared.ui.components.glass.GlassAlertDialog
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -24,6 +23,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
@@ -68,6 +68,7 @@ import com.shub39.grit.shared.ui.components.middleItemShape
 import com.shub39.grit.shared.ui.navigation.horizontalTransitionMetadata
 import com.shub39.grit.shared.ui.task.TaskAction
 import com.shub39.grit.shared.ui.task.TaskState
+import com.shub39.grit.shared.ui.task.ui.component.ArchiveToast
 import com.shub39.grit.shared.ui.task.ui.component.CategoryUpsertSheet
 import com.shub39.grit.shared.ui.task.ui.component.TaskUpsertSheet
 import com.shub39.grit.shared.ui.task.ui.section.TaskList
@@ -113,6 +114,7 @@ fun TasksPage(state: TaskState, onAction: (TaskAction) -> Unit) {
     var showCategoryEditor by remember { mutableStateOf(false) }
     val backStack = rememberNavBackStack(taskConfiguration, TaskRoutes.List)
 
+    Box(Modifier.fillMaxSize()) {
     NavDisplay(
         backStack = backStack,
         entryProvider =
@@ -198,59 +200,19 @@ fun TasksPage(state: TaskState, onAction: (TaskAction) -> Unit) {
                 }
 
                 entry<TaskRoutes.Detail>(metadata = horizontalTransitionMetadata()) { route ->
-                    val task = state.tasks.values.flatten().firstOrNull { it.id == route.taskId }
-
-                    if (task == null) {
-                        LaunchedEffect(Unit) {
-                            if (backStack.size != 1) backStack.removeLastOrNull()
-                        }
-                    } else {
-                        TaskUpsertSheet(
-                            task = task,
-                            categories = state.tasks.keys.toList(),
-                            isEditSheet = true,
-                            is24Hr = state.is24Hour,
-                            // A fresh detail screen must not steal focus into the keyboard.
-                            fullScreen = true,
-                            autoFocusTitle = false,
-                            onDismissRequest = {
-                                if (backStack.size != 1) backStack.removeLastOrNull()
-                            },
-                            saving = state.saving,
-                            onUpsert = { updated ->
-                                onAction(
-                                    TaskAction.UpsertTask(updated) {
-                                        if (backStack.size != 1) backStack.removeLastOrNull()
-                                    }
-                                )
-                            },
-                            onDelete = {
-                                onAction(
-                                    TaskAction.DeleteTask(task) {
-                                        if (backStack.size != 1) backStack.removeLastOrNull()
-                                    }
-                                )
-                            },
-                        )
-                    }
+                    TaskDetailScreen(
+                        state = state,
+                        taskId = route.taskId,
+                        onAction = onAction,
+                        onClose = { if (backStack.size != 1) backStack.removeLastOrNull() },
+                    )
                 }
             },
     )
-
-    if (state.error != null) {
-        GlassAlertDialog(
-            onDismissRequest = { onAction(TaskAction.ClearError) },
-            title = { androidx.compose.material3.Text("操作失败") },
-            text = { androidx.compose.material3.Text(state.error) },
-            confirmButton = {
-                androidx.compose.material3.TextButton(
-                    onClick = { onAction(TaskAction.ClearError) }
-                ) {
-                    androidx.compose.material3.Text("关闭")
-                }
-            },
-        )
+        ArchiveToast(state, onAction)
     }
+
+    TaskErrorDialog(state, onAction)
 
     if (showCategoryEditor) {
         CategoryEditDialog(

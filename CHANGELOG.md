@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.1.0
+
+- New Overview tab between Task and Setting, with three views: the task wall, Later and Done
+- Task wall: every open task is a card. The closer its deadline, the larger the card; the lower its priority, the fainter its title and border. Cards are read from the top left: most urgent first, then most important
+- Tasks have a deadline (a day, optional) and a priority (low, normal, high); set both in the task editor. The Task page shows the deadline under the title
+- Two glass keys over the wall choose what a tap on a card does: Preview opens a pane of glass over the wall where you can tick sections, finish, suspend or put off the task; Detail opens the editor. A long press does the other one
+- A task whose deadline has passed keeps the largest card with a thin mark on the left, and offers three choices on the card: set a new deadline, remove the deadline, or give it up
+- Tasks without a deadline sink down the wall the longer they are left alone. After 30 days (low priority) or 60 days (normal) the preview asks whether to make the task smaller, put it under Later, or give it up. High priority tasks never sink
+- Completing a task archives it at once: it leaves the Task page and the wall, and "Archived · Undo" appears for a few seconds. Archived tasks are listed under Done, newest first, and return to their old place when reopened. "Delete completed" moved there
+- Suspend a task until tomorrow, next Monday, a month from now or a day you pick; it stays off the Task page and the wall until then. "Later" parks a task with no date
+- Today starts empty each day: tasks left on it from the day before go back to their categories
+- Settings: the three day limits that decide card size, the wall text size, and whether priority also tints the card background
+- Sections are simply done or not done; their completion date is gone. The "hide completed" option of categories and the "reorder after completing" setting are removed, since completed tasks are always archived
+- The tasks widget no longer shows completed tasks
+- Backups are now in Grit Glass's own format (version 2). Backups from Grit Glass 1.0.x and from Grhinet can still be imported; Grhinet cannot import backups made by this version
+
 ## 1.0.2
 
 - Tasks: tapping a task no longer marks it done or not done by accident. Turn on the new tick button beside Reorder first; while it is on, each task shows a circle and a tap toggles it. With it off, a tap on a task does nothing and the list just scrolls

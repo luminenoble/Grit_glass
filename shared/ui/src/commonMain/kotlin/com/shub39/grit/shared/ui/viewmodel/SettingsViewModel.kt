@@ -186,7 +186,7 @@ class SettingsViewModel(
 
                 is ChangeBiometricLock -> settingsDatastore.setBiometricPref(action.pref)
 
-                is ChangeReorderTasks -> settingsDatastore.setTaskReorderPref(action.pref)
+                is ChangeWallSettings -> settingsDatastore.setWallSettings(action.settings)
 
                 is ChangeWidgetTextSize -> settingsDatastore.setWidgetTextSize(action.size)
 
@@ -245,8 +245,8 @@ class SettingsViewModel(
             observeJob?.cancel()
             observeJob = launch {
                 settingsDatastore
-                    .getTaskReorderPref()
-                    .onEach { pref -> _state.update { it.copy(reorderTasks = pref) } }
+                    .getWallSettingsFlow()
+                    .onEach { wall -> _state.update { it.copy(wall = wall) } }
                     .launchIn(this)
 
                 settingsDatastore

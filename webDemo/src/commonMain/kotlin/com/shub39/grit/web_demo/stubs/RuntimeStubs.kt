@@ -25,6 +25,7 @@ import kotlin.time.Clock
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.datetime.LocalDate
 import org.koin.core.annotation.Single
 
 @Single(binds = [ThemeDatastore::class])
@@ -52,7 +53,8 @@ class SettingsDatastoreStub : SettingsDatastore {
     private val hours = MutableStateFlow(false)
     private val notifications = MutableStateFlow(false)
     private val biometric = MutableStateFlow(false)
-    private val reorder = MutableStateFlow(true)
+    private val wall = MutableStateFlow(WallSettings())
+    private var lastOpenedOn: LocalDate? = null
     private val changelog = MutableStateFlow("")
     private val widget = MutableStateFlow(WidgetTextSize.MEDIUM)
 
@@ -80,12 +82,6 @@ class SettingsDatastoreStub : SettingsDatastore {
         biometric.value = pref
     }
 
-    override fun getTaskReorderPref() = reorder.asStateFlow()
-
-    override suspend fun setTaskReorderPref(pref: Boolean) {
-        reorder.value = pref
-    }
-
     override fun getLastChangelogShown() = changelog.asStateFlow()
 
     override suspend fun updateLastChangelogShown(version: String) {
@@ -96,6 +92,18 @@ class SettingsDatastoreStub : SettingsDatastore {
 
     override suspend fun setWidgetTextSize(size: WidgetTextSize) {
         widget.value = size
+    }
+
+    override fun getWallSettingsFlow() = wall.asStateFlow()
+
+    override suspend fun setWallSettings(settings: WallSettings) {
+        wall.value = settings
+    }
+
+    override suspend fun getLastOpenedOn() = lastOpenedOn
+
+    override suspend fun setLastOpenedOn(date: LocalDate) {
+        lastOpenedOn = date
     }
 }
 
@@ -173,26 +181,35 @@ class TaskRepoStub : TaskRepo {
         val known = old?.sections?.associateBy { it.id } ?: emptyMap()
         val ids = task.sections.filter { it.id > 0 }.map { it.id }
         require(ids.distinct().size == ids.size && ids.all { it in known })
+        val now = Clock.System.now()
+        val sections =
+            task.sections.mapIndexed { i, s ->
+                s.normalized()
+                    .copy(
+                        id = if (s.id == 0L) nextSection++ else s.id,
+                        taskId = id,
+                        orderIndex = i,
+                        updatedAt = now,
+                    )
+            }
+        val draft = task.copy(title = task.title.trim(), sections = task.sections.map { it.normalized() })
         val saved =
-            task.copy(
+            draft.copy(
                 id = id,
-                title = task.title.trim(),
                 orderIndex =
                     if (old == null || old.categoryId != task.categoryId)
                         d.tasks.count { it.categoryId == task.categoryId }
                     else old.orderIndex,
-                createdAt = old?.createdAt ?: Clock.System.now(),
-                updatedAt = Clock.System.now(),
-                sections =
-                    task.sections.mapIndexed { i, s ->
-                        s.normalized()
-                            .copy(
-                                id = if (s.id == 0L) nextSection++ else s.id,
-                                taskId = id,
-                                orderIndex = i,
-                                updatedAt = Clock.System.now(),
-                            )
+                createdAt = old?.createdAt ?: now,
+                updatedAt = now,
+                lastTouchedAt = if (touches(old, draft)) now else old!!.lastTouchedAt,
+                completedAt =
+                    when {
+                        !task.isCompleted -> null
+                        old?.isCompleted == true -> old.completedAt ?: now
+                        else -> now
                     },
+                sections = sections,
             )
         d.copy(tasks = normalize(d.tasks.filterNot { it.id == id } + saved)) to id
     }
@@ -224,6 +241,10 @@ class TaskRepoStub : TaskRepo {
 
     override suspend fun deleteAllCategories() {
         write { DemoData(emptyList(), emptyList()) to Unit }
+    }
+
+    override suspend fun clearToday() {
+        write { d -> d.copy(tasks = d.tasks.map { it.copy(isToday = false) }) to Unit }
     }
 
     override suspend fun reorderTasks(categoryId: Long, ids: List<Long>) {
@@ -271,6 +292,7 @@ class TaskRepoStub : TaskRepo {
                         it.orderIndex
                     },
                 updatedAt = Clock.System.now(),
+                lastTouchedAt = Clock.System.now(),
             )
         d.copy(tasks = d.tasks.map { if (it.id == task.id) updated else it }) to saved.id
     }
@@ -288,6 +310,7 @@ class TaskRepoStub : TaskRepo {
                                         .filterNot { it.id == id }
                                         .mapIndexed { i, s -> s.copy(orderIndex = i) },
                                 updatedAt = Clock.System.now(),
+                                lastTouchedAt = Clock.System.now(),
                             )
                     }
             ) to Unit

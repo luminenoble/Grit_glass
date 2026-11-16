@@ -16,10 +16,8 @@
  */
 package com.shub39.grit.core.tasks
 
-import com.shub39.grit.core.now
 import kotlin.time.Clock
 import kotlin.time.Instant
-import kotlinx.datetime.LocalDate
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 
@@ -30,20 +28,15 @@ data class Section(
     val title: String = "unname",
     val content: String = "",
     val orderIndex: Int = 0,
-    val completedOn: LocalDate? = null,
+    val isCompleted: Boolean = false,
     val createdAt: Instant = Clock.System.now(),
     val updatedAt: Instant = createdAt,
     /** Same format as a Task's title colour; null is the default black. */
     val titleColor: String? = null,
 ) {
-    val isCompleted: Boolean
-        get() = completedOn != null
-
-    fun toggleCompleted(today: LocalDate = LocalDate.now()): Section =
-        copy(completedOn = if (isCompleted) null else today)
+    fun toggleCompleted(): Section = copy(isCompleted = !isCompleted)
 
     fun normalized(): Section {
-        require(completedOn == null || completedOn <= LocalDate.now()) { "完成日期不能在未来" }
         validateTitleColor(titleColor)
         return copy(title = title.trim().ifBlank { "unname" })
     }

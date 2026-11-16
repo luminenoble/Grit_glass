@@ -18,6 +18,7 @@ package com.shub39.grit.tasks.data.database
 
 import androidx.room3.*
 import kotlin.time.Instant
+import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 
 @Entity(
@@ -45,6 +46,13 @@ data class TaskEntity(
     val reminder: LocalDateTime?,
     val createdAt: Instant,
     val updatedAt: Instant,
+    val deadline: LocalDate?,
+    /** [com.shub39.grit.core.tasks.Priority] ordinal: 0 low, 1 normal, 2 high. */
+    val priority: Int,
+    val lastTouchedAt: Instant,
+    val completedAt: Instant?,
+    val hiddenUntil: LocalDate?,
+    val isSomeday: Boolean,
 )
 
 data class TaskWithSections(

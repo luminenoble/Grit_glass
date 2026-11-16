@@ -69,7 +69,7 @@ class TaskRepositoryTest {
                     sections =
                         listOf(
                             Section(title = "1"),
-                            Section(title = "2", completedOn = LocalDate(2026, 1, 1)),
+                            Section(title = "2", isCompleted = true),
                         ),
                 )
             )
@@ -137,5 +137,43 @@ class TaskRepositoryTest {
             fail("Should reject")
         } catch (_: IllegalArgumentException) {}
         assertEquals(old, repo.getTaskById(id))
+    }
+
+    @Test
+    fun completingArchivesInPlaceAndReopeningRestoresThePosition() = runBlocking {
+        val c = repo.upsertCategory(Category(name = "A"))
+        val ids = (1..3).map { repo.upsertTask(Task(categoryId = c, title = "$it")) }
+        val open = repo.getTaskById(ids[1])!!
+        assertNull(open.completedAt)
+        repo.upsertTask(open.copy(isCompleted = true))
+        val archived = repo.getTaskById(ids[1])!!
+        assertNotNull(archived.completedAt)
+        assertEquals(1, archived.orderIndex)
+        assertEquals(open.lastTouchedAt, archived.lastTouchedAt)
+        repo.upsertTask(archived.copy(isCompleted = false))
+        assertNull(repo.getTaskById(ids[1])!!.completedAt)
+        assertEquals(ids, repo.getTasks().map { it.id })
+        assertEquals(listOf(0, 1, 2), repo.getTasks().map { it.orderIndex })
+    }
+
+    @Test
+    fun onlyWorkOnATaskTouchesItAndTodayIsClearedSilently() = runBlocking {
+        val c = repo.upsertCategory(Category(name = "A"))
+        val id = repo.upsertTask(Task(categoryId = c, title = "任务"))
+        val created = repo.getTaskById(id)!!
+        Thread.sleep(5)
+        repo.upsertTask(created.copy(hiddenUntil = LocalDate(2999, 1, 1), titleColor = "#112233"))
+        val shelved = repo.getTaskById(id)!!
+        assertEquals(LocalDate(2999, 1, 1), shelved.hiddenUntil)
+        assertEquals(created.lastTouchedAt, shelved.lastTouchedAt)
+        repo.upsertTask(shelved.copy(isToday = true, deadline = LocalDate(2999, 1, 2)))
+        val worked = repo.getTaskById(id)!!
+        assertTrue(worked.lastTouchedAt > created.lastTouchedAt)
+        Thread.sleep(5)
+        repo.clearToday()
+        val cleared = repo.getTaskById(id)!!
+        assertFalse(cleared.isToday)
+        assertEquals(worked.lastTouchedAt, cleared.lastTouchedAt)
+        assertEquals(LocalDate(2999, 1, 2), cleared.deadline)
     }
 }

@@ -30,12 +30,12 @@ class TaskModelTest {
     private fun backup(
         sections: List<Section> =
             listOf(
-                Section(id = 3, title = "工作", completedOn = LocalDate(2026, 1, 1), createdAt = time)
+                Section(id = 3, title = "工作", isCompleted = true, createdAt = time)
             )
     ) =
         TaskBackup(
             TaskBackup.FORMAT,
-            1,
+            TaskBackup.VERSION,
             time,
             listOf(Category(id = 1, name = "学习", createdAt = time)),
             listOf(
@@ -52,32 +52,44 @@ class TaskModelTest {
         )
 
     @Test
-    fun sectionCompletionUsesDateAndDoesNotCompleteTask() {
-        val date = LocalDate(2026, 1, 1)
-        val completed = Section().toggleCompleted(date)
-        assertEquals(date, completed.completedOn)
+    fun sectionCompletionIsAFlagAndDoesNotCompleteTask() {
+        val completed = Section().toggleCompleted()
         assertTrue(completed.isCompleted)
-        assertNull(completed.toggleCompleted(date).completedOn)
+        assertFalse(completed.toggleCompleted().isCompleted)
         assertFalse(Task(categoryId = 1, title = "长期事项", sections = listOf(completed)).isCompleted)
         assertEquals("unname", Section(title = "  ").normalized().title)
     }
 
     @Test
-    fun futureCompletionDatesAreRejected() {
-        assertThrows(IllegalArgumentException::class.java) {
-            Section(completedOn = LocalDate.now().plus(1, DateTimeUnit.DAY)).normalized()
-        }
-    }
-
-    @Test
-    fun backupRoundTripPreservesWorkDatesAndIdentity() {
-        val original = backup()
+    fun backupRoundTripPreservesEveryFieldAndIdentity() {
+        val plain = backup()
+        val original =
+            plain.copy(
+                tasks =
+                    plain.tasks +
+                        plain.tasks
+                            .single()
+                            .copy(
+                                id = 9,
+                                orderIndex = 1,
+                                sections = emptyList(),
+                                isCompleted = true,
+                                completedAt = time,
+                                deadline = LocalDate(2026, 3, 1),
+                                priority = Priority.HIGH,
+                                hiddenUntil = LocalDate(2026, 2, 1),
+                                isSomeday = true,
+                            )
+            )
         val encoded = TaskBackup.json.encodeToString(original)
         val decoded = TaskBackup.decode(encoded)
-        assertEquals(original.tasks.single().titleColor, decoded.tasks.single().titleColor)
-        assertEquals(original.tasks.single().reminder, decoded.tasks.single().reminder)
-        assertEquals(LocalDate(2026, 1, 1), decoded.tasks.single().sections.single().completedOn)
-        assertEquals(2L, decoded.tasks.single().sections.single().taskId)
+        assertTrue(encoded.contains("\"format\": \"grit_glass\""))
+        assertTrue(encoded.contains("\"formatVersion\": 2"))
+        assertEquals(original.tasks.last(), decoded.tasks.last())
+        assertEquals(original.tasks.first().titleColor, decoded.tasks.first().titleColor)
+        assertEquals(original.tasks.first().reminder, decoded.tasks.first().reminder)
+        assertTrue(decoded.tasks.first().sections.single().isCompleted)
+        assertEquals(2L, decoded.tasks.first().sections.single().taskId)
         assertFalse(encoded.contains("taskId"))
         assertEquals(original.categories, decoded.categories)
     }
@@ -132,25 +144,27 @@ class TaskModelTest {
         assertThrows(IllegalArgumentException::class.java) {
             b.copy(tasks = listOf(b.tasks.single().copy(orderIndex = 5))).validated()
         }
-        assertThrows(IllegalArgumentException::class.java) { b.copy(formatVersion = 2).validated() }
+        assertThrows(IllegalArgumentException::class.java) { b.copy(formatVersion = 3).validated() }
+        // A completion time and the completed flag go together.
+        assertThrows(IllegalArgumentException::class.java) {
+            b.copy(tasks = listOf(b.tasks.single().copy(isCompleted = true))).validated()
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            b.copy(tasks = listOf(b.tasks.single().copy(completedAt = time))).validated()
+        }
     }
 
     @Test
-    fun multipleRecordsOnSameDayAndDuplicateTitlesAreAllowed() {
+    fun duplicateSectionTitlesAreAllowed() {
         val b =
             backup(
                 listOf(
-                    Section(
-                        id = 3,
-                        title = "重复",
-                        completedOn = LocalDate(2026, 1, 1),
-                        createdAt = time,
-                    ),
+                    Section(id = 3, title = "重复", isCompleted = true, createdAt = time),
                     Section(
                         id = 4,
                         title = "重复",
                         orderIndex = 1,
-                        completedOn = LocalDate(2026, 1, 1),
+                        isCompleted = true,
                         createdAt = time,
                     ),
                 )
@@ -165,11 +179,110 @@ class TaskModelTest {
         }
         val text = TaskBackup.json.encodeToString(backup())
         assertThrows(Exception::class.java) {
-            TaskBackup.decode(text.replace("\"formatVersion\": 1", "\"formatVersion\": 9"))
+            TaskBackup.decode(text.replace("\"formatVersion\": 2", "\"formatVersion\": 9"))
         }
         assertThrows(IllegalArgumentException::class.java) {
-            TaskBackup.decode(text.replace(Regex("\"completedOn\": \"2026-01-01\",?"), ""))
+            TaskBackup.decode(text.replace(Regex("\"isCompleted\": true,?"), ""))
         }
+        assertThrows(IllegalArgumentException::class.java) {
+            TaskBackup.decode(text.replace(Regex("\"lastTouchedAt\": \"[^\"]*\",?"), ""))
+        }
+    }
+
+    /** A file as Grit Glass 1.0.x and Grhinet write it: `grit_rhine`, version 1. */
+    private val legacy =
+        """
+        {
+          "format": "grit_rhine",
+          "formatVersion": 1,
+          "exportedAt": "2026-01-05T00:00:00Z",
+          "categories": [
+            {"id": 1, "name": "学习", "description": "", "orderIndex": 0, "titleColor": null,
+             "hideCompleted": true, "createdAt": "2026-01-01T00:00:00Z", "updatedAt": "2026-01-01T00:00:00Z"}
+          ],
+          "tasks": [
+            {"id": 2, "categoryId": 1, "title": "开着的", "orderIndex": 0, "isCompleted": false,
+             "reminder": null, "description": "", "isToday": true, "titleColor": "#435B64",
+             "createdAt": "2026-01-01T00:00:00Z", "updatedAt": "2026-01-03T00:00:00Z",
+             "sections": [
+               {"id": 3, "title": "做完的", "content": "", "orderIndex": 0, "completedOn": "2026-01-02",
+                "createdAt": "2026-01-01T00:00:00Z", "updatedAt": "2026-01-02T00:00:00Z", "titleColor": null},
+               {"id": 4, "title": "没做的", "content": "", "orderIndex": 1, "completedOn": null,
+                "createdAt": "2026-01-01T00:00:00Z", "updatedAt": "2026-01-01T00:00:00Z"}
+             ]},
+            {"id": 5, "categoryId": 1, "title": "做完的", "orderIndex": 1, "isCompleted": true,
+             "createdAt": "2026-01-01T00:00:00Z", "updatedAt": "2026-01-04T00:00:00Z", "sections": []}
+          ]
+        }
+        """
+            .trimIndent()
+
+    @Test
+    fun legacyBackupsAreUpgradedLikeTheDatabaseMigration() {
+        val decoded = TaskBackup.decode(legacy)
+        assertEquals(TaskBackup.FORMAT, decoded.format)
+        assertEquals(TaskBackup.VERSION, decoded.formatVersion)
+        assertEquals("学习", decoded.categories.single().name)
+        val (open, done) = decoded.tasks
+        assertEquals(listOf(true, false), open.sections.map { it.isCompleted })
+        assertEquals(Priority.NORMAL, open.priority)
+        assertEquals(Instant.parse("2026-01-03T00:00:00Z"), open.lastTouchedAt)
+        assertNull(open.completedAt)
+        assertNull(open.deadline)
+        assertTrue(open.isToday)
+        assertEquals("#435B64", open.titleColor)
+        assertEquals(Instant.parse("2026-01-04T00:00:00Z"), done.completedAt)
+        assertEquals(done.updatedAt, done.lastTouchedAt)
+        // What was imported exports as the current format and reads back the same.
+        assertEquals(decoded, TaskBackup.decode(TaskBackup.json.encodeToString(decoded)))
+        // A v1 Section must still say whether it was completed.
+        assertThrows(IllegalArgumentException::class.java) {
+            TaskBackup.decode(legacy.replace("\"completedOn\": null,", ""))
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            TaskBackup.decode(legacy.replace("\"formatVersion\": 1", "\"formatVersion\": 2"))
+        }
+    }
+
+    @Test
+    fun onlyWorkOnATaskTouchesIt() {
+        val task =
+            Task(
+                id = 1,
+                categoryId = 1,
+                title = "任务",
+                createdAt = time,
+                sections = listOf(Section(id = 1, title = "一"), Section(id = 2, title = "二")),
+            )
+        assertTrue(touches(null, task))
+        assertFalse(touches(task, task.copy()))
+        // Opening, reordering among tasks, recolouring, completing, shelving: not work.
+        for (same in
+            listOf(
+                task.copy(orderIndex = 3),
+                task.copy(titleColor = "#336699"),
+                task.copy(isCompleted = true),
+                task.copy(hiddenUntil = LocalDate(2027, 1, 1)),
+                task.copy(isSomeday = true),
+                task.copy(categoryId = 2),
+                task.copy(isToday = true).let { it.copy(isToday = false) },
+                task.copy(reminder = LocalDateTime(2027, 1, 1, 8, 0)),
+            )) assertFalse(same.toString(), touches(task, same))
+        for (worked in
+            listOf(
+                task.copy(title = "改了"),
+                task.copy(description = "写了点"),
+                task.copy(deadline = LocalDate(2027, 1, 1)),
+                task.copy(priority = Priority.HIGH),
+                task.copy(isToday = true),
+                task.copy(sections = task.sections.map { it.toggleCompleted() }),
+                task.copy(sections = task.sections.reversed()),
+                task.copy(sections = task.sections + Section(title = "三")),
+                task.copy(sections = task.sections.dropLast(1)),
+                task.copy(sections = task.sections.map { it.copy(content = "正文") }),
+            )) assertTrue(worked.toString(), touches(task, worked))
+        // Leaving Today is not work, joining it is.
+        assertFalse(touches(task.copy(isToday = true), task))
     }
 
     @Test

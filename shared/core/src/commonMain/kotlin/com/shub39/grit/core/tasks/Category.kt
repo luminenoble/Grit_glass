@@ -27,7 +27,6 @@ data class Category(
     val description: String = "",
     val orderIndex: Int = 0,
     val titleColor: String? = null,
-    val hideCompleted: Boolean = false,
     val createdAt: Instant = Clock.System.now(),
     val updatedAt: Instant = createdAt,
 )

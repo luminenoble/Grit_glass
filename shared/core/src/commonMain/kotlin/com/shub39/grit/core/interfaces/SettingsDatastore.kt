@@ -17,8 +17,10 @@
 package com.shub39.grit.core.interfaces
 
 import com.shub39.grit.core.settings.Sections
+import com.shub39.grit.core.settings.WallSettings
 import com.shub39.grit.core.settings.WidgetTextSize
 import kotlinx.coroutines.flow.Flow
+import kotlinx.datetime.LocalDate
 
 interface SettingsDatastore {
     fun getStartingSectionPref(): Flow<Sections>
@@ -37,10 +39,6 @@ interface SettingsDatastore {
 
     suspend fun setBiometricPref(pref: Boolean)
 
-    fun getTaskReorderPref(): Flow<Boolean>
-
-    suspend fun setTaskReorderPref(pref: Boolean)
-
     fun getLastChangelogShown(): Flow<String>
 
     suspend fun updateLastChangelogShown(version: String)
@@ -48,4 +46,13 @@ interface SettingsDatastore {
     fun getWidgetTextSizeFlow(): Flow<WidgetTextSize>
 
     suspend fun setWidgetTextSize(size: WidgetTextSize)
+
+    fun getWallSettingsFlow(): Flow<WallSettings>
+
+    suspend fun setWallSettings(settings: WallSettings)
+
+    /** The last day the app was opened, for the daily Today reset; null before the first run. */
+    suspend fun getLastOpenedOn(): LocalDate?
+
+    suspend fun setLastOpenedOn(date: LocalDate)
 }

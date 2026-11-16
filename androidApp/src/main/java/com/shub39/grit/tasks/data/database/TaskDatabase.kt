@@ -34,6 +34,6 @@ abstract class TaskDatabase : RoomDatabase() {
 
     companion object {
         const val DB_NAME = "grit_glass_database"
-        const val SCHEMA_VERSION = 1
+        const val SCHEMA_VERSION = 2
     }
 }

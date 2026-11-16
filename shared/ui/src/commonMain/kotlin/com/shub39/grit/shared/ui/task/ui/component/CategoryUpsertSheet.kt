@@ -39,7 +39,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonShapes
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -59,7 +58,6 @@ import com.shub39.grit.shared.ui.components.jsonSaver
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
@@ -68,11 +66,8 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import com.shub39.grit.core.tasks.Category
-import com.shub39.grit.shared.ui.components.ExpressiveSwitch
 import com.shub39.grit.shared.ui.components.TitleColorRow
 import com.shub39.grit.shared.ui.components.GritBottomSheet
-import com.shub39.grit.shared.ui.components.detachedItemShape
-import com.shub39.grit.shared.ui.components.listItemColors
 import com.shub39.grit.shared.ui.theme.flexFontEmphasis
 import grit.shared.ui.generated.resources.*
 import kotlinx.coroutines.delay
@@ -194,26 +189,6 @@ fun CategoryUpsertSheet(
                 default = MaterialTheme.colorScheme.onSurface,
                 onChange = { newCategory = newCategory.copy(titleColor = it) },
                 enabled = !saving,
-            )
-
-            // Completed tasks in this category stay hidden in lists and widgets
-            ListItem(
-                colors = listItemColors(),
-                modifier = Modifier.clip(detachedItemShape()),
-                leadingContent = {
-                    Icon(
-                        imageVector = vectorResource(Res.drawable.check_circle),
-                        contentDescription = null,
-                    )
-                },
-                headlineContent = { Text(text = stringResource(Res.string.hide_completed)) },
-                trailingContent = {
-                    ExpressiveSwitch(
-                        enabled = !saving,
-                        checked = newCategory.hideCompleted,
-                        onCheckedChange = { newCategory = newCategory.copy(hideCompleted = it) },
-                    )
-                },
             )
 
             GlassButton(

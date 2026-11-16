@@ -21,13 +21,20 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.shub39.grit.core.interfaces.SettingsDatastore
+import com.shub39.grit.core.settings.ImportanceDisplay
 import com.shub39.grit.core.settings.Sections
+import com.shub39.grit.core.settings.WallSettings
+import com.shub39.grit.core.settings.WallTextSize
 import com.shub39.grit.core.settings.WidgetTextSize
+import com.shub39.grit.core.tasks.WallThresholds
 import com.shub39.grit.widgets.WidgetUpdates
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.datetime.LocalDate
 import org.koin.core.annotation.Single
 
 @Single(binds = [SettingsDatastore::class])
@@ -41,9 +48,14 @@ class SettingsDatastoreImpl(
         private val is24HrKey = booleanPreferencesKey("is_24Hr")
         private val notificationsKey = booleanPreferencesKey("notifications")
         private val biometricLockKey = booleanPreferencesKey("biometric")
-        private val taskReorderKey = booleanPreferencesKey("task_reorder")
         private val lastChangelogShownKey = stringPreferencesKey("last_changelog_shown")
         private val widgetTextSizeKey = stringPreferencesKey("widget_text_size")
+        private val wallXlDaysKey = intPreferencesKey("wall_xl_days")
+        private val wallLDaysKey = intPreferencesKey("wall_l_days")
+        private val wallMDaysKey = intPreferencesKey("wall_m_days")
+        private val wallTextSizeKey = stringPreferencesKey("wall_text_size")
+        private val importanceDisplayKey = stringPreferencesKey("importance_display")
+        private val lastOpenedOnKey = stringPreferencesKey("last_opened_on")
     }
 
     override fun getStartingSectionPref(): Flow<Sections> =
@@ -77,13 +89,6 @@ class SettingsDatastoreImpl(
         datastore.edit { prefs -> prefs[biometricLockKey] = pref }
     }
 
-    override fun getTaskReorderPref(): Flow<Boolean> =
-        datastore.data.map { prefs -> prefs[taskReorderKey] ?: true }
-
-    override suspend fun setTaskReorderPref(pref: Boolean) {
-        datastore.edit { prefs -> prefs[taskReorderKey] = pref }
-    }
-
     override fun getLastChangelogShown(): Flow<String> =
         datastore.data.map { prefs -> prefs[lastChangelogShownKey] ?: "" }
 
@@ -106,5 +111,44 @@ class SettingsDatastoreImpl(
         // Push the new size to every widget: a placed widget with no live Glance session
         // would otherwise keep the old text until its next data change.
         runCatching { WidgetUpdates.tasks(context) }
+    }
+
+    override fun getWallSettingsFlow(): Flow<WallSettings> =
+        datastore.data.map { prefs ->
+            val defaults = WallSettings()
+            val stored =
+                WallThresholds(
+                    prefs[wallXlDaysKey] ?: defaults.thresholds.a,
+                    prefs[wallLDaysKey] ?: defaults.thresholds.b,
+                    prefs[wallMDaysKey] ?: defaults.thresholds.c,
+                )
+            WallSettings(
+                thresholds = if (stored.isValid) stored else defaults.thresholds,
+                textSize =
+                    WallTextSize.entries.firstOrNull { it.name == prefs[wallTextSizeKey] }
+                        ?: defaults.textSize,
+                importance =
+                    ImportanceDisplay.entries.firstOrNull {
+                        it.name == prefs[importanceDisplayKey]
+                    } ?: defaults.importance,
+            )
+        }
+
+    override suspend fun setWallSettings(settings: WallSettings) {
+        require(settings.thresholds.isValid) { "档位阈值必须是正整数，并且 a < b < c" }
+        datastore.edit { prefs ->
+            prefs[wallXlDaysKey] = settings.thresholds.a
+            prefs[wallLDaysKey] = settings.thresholds.b
+            prefs[wallMDaysKey] = settings.thresholds.c
+            prefs[wallTextSizeKey] = settings.textSize.name
+            prefs[importanceDisplayKey] = settings.importance.name
+        }
+    }
+
+    override suspend fun getLastOpenedOn(): LocalDate? =
+        datastore.data.first()[lastOpenedOnKey]?.let { runCatching { LocalDate.parse(it) }.getOrNull() }
+
+    override suspend fun setLastOpenedOn(date: LocalDate) {
+        datastore.edit { prefs -> prefs[lastOpenedOnKey] = date.toString() }
     }
 }

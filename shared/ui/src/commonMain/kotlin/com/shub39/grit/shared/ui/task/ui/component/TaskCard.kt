@@ -36,6 +36,8 @@ import com.shub39.grit.core.tasks.*
 import com.shub39.grit.core.toFormattedString
 import com.shub39.grit.shared.ui.theme.withTitleColor
 import grit.shared.ui.generated.resources.*
+import com.shub39.grit.shared.ui.overview.ui.component.label
+import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import org.jetbrains.compose.resources.vectorResource
 
@@ -139,16 +141,17 @@ fun TaskCard(
                                                 ),
                                         )
                                     }
-                                    section.completedOn?.let {
-                                        Text(
-                                            it.toString(),
-                                            style = MaterialTheme.typography.labelSmall,
-                                        )
-                                    }
                                 }
                             }
                         }
                     }
+                }
+                task.deadline?.let { deadline ->
+                    Text(
+                        "DDL ${deadline.label(LocalDate.now())}",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
                 }
                 task.reminder?.let { reminder ->
                     Text(

@@ -45,8 +45,11 @@ interface TasksDao {
     @Query("UPDATE tasks SET orderIndex = :position, updatedAt = :time WHERE id = :id")
     suspend fun setOrder(id: Long, position: Int, time: Instant)
 
-    @Query("UPDATE tasks SET updatedAt = :time WHERE id = :id")
+    /** Work was done on the task. */
+    @Query("UPDATE tasks SET updatedAt = :time, lastTouchedAt = :time WHERE id = :id")
     suspend fun touch(id: Long, time: Instant)
+
+    @Query("UPDATE tasks SET isToday = 0 WHERE isToday = 1") suspend fun clearToday()
 
     @Query("DELETE FROM tasks WHERE id = :id") suspend fun delete(id: Long)
 

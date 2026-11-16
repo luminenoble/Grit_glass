@@ -17,10 +17,13 @@
 package com.shub39.grit.core
 
 import kotlin.time.Clock
+import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.LocalTime
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.datetime.todayIn
 
@@ -30,3 +33,10 @@ fun LocalDateTime.Companion.now(): LocalDateTime =
 fun LocalDate.Companion.now(): LocalDate = Clock.System.todayIn(TimeZone.currentSystemDefault())
 
 fun LocalTime.Companion.now(): LocalTime = LocalDateTime.now().time
+
+/** The first Monday after this day. */
+fun LocalDate.nextMonday(): LocalDate {
+    var day = plus(1, DateTimeUnit.DAY)
+    while (day.dayOfWeek != DayOfWeek.MONDAY) day = day.plus(1, DateTimeUnit.DAY)
+    return day
+}

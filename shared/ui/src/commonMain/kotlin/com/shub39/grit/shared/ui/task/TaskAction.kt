@@ -22,6 +22,12 @@ import com.shub39.grit.core.tasks.Task
 sealed interface TaskAction {
     data object ClearError : TaskAction
 
+    /** Reopens the task that was just archived. */
+    data object UndoArchive : TaskAction
+
+    /** The undo offer has run out or was swiped away. */
+    data object DismissArchived : TaskAction
+
     data class AddCategory(
         val category: Category,
         val onSaved: (() -> Unit)? = null,

@@ -129,10 +129,10 @@ fun TaskList(
 ) = PageFill {
     val windowSizeClass = LocalWindowSizeClass.current
 
-    var showDeleteDialog by remember { mutableStateOf(false) }
     var editState by remember { mutableStateOf(false) }
-    // Tapping a card toggles completion only while this is on; otherwise a tap does nothing, so
-    // scrolling the list can't finish a task by accident. It and reorder mode exclude each other.
+    // Tapping a card completes it (and so archives it) only while this is on; otherwise a tap
+    // does nothing, so scrolling the list can't finish a task by accident. It and reorder mode
+    // exclude each other.
     var completeState by remember { mutableStateOf(false) }
 
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
@@ -159,7 +159,6 @@ fun TaskList(
                 completeState = it
                 if (it) editState = false
             },
-            onDeleteClick = { showDeleteDialog = true },
             isExpanded = windowSizeClass.widthSizeClass == WindowWidthSizeClass.Expanded,
         )
 
@@ -214,21 +213,11 @@ fun TaskList(
             backdrop = backdrop,
             label =
                 if (
-                    state.tasks[state.currentCategory].isNullOrEmpty() ||
+                    state.openTasks(state.currentCategory).isEmpty() ||
                         windowSizeClass.widthSizeClass == WindowWidthSizeClass.Expanded
                 )
                     stringResource(Res.string.add_task)
                 else null,
-        )
-    }
-
-    if (showDeleteDialog) {
-        DeleteTasksDialog(
-            onDismiss = { showDeleteDialog = false },
-            onConfirm = {
-                onAction(TaskAction.DeleteTasks)
-                showDeleteDialog = false
-            },
         )
     }
 }
@@ -241,7 +230,6 @@ private fun TaskListTopBar(
     onReorderToggle: (Boolean) -> Unit,
     isCompleteMode: Boolean,
     onCompleteToggle: (Boolean) -> Unit,
-    onDeleteClick: () -> Unit,
     isExpanded: Boolean,
 ) {
     Box(Modifier.fillMaxWidth()) {
@@ -267,19 +255,8 @@ private fun TaskListTopBar(
         },
         actions = {
             val motionScheme = MaterialTheme.motionScheme
-
-            AnimatedVisibility(
-                visible = state.completedTasks.isNotEmpty(),
-                enter = fadeIn(motionScheme.fastEffectsSpec()),
-                exit = fadeOut(motionScheme.fastEffectsSpec()),
-            ) {
-                GlassIconButton(
-                    icon = vectorResource(Res.drawable.delete),
-                    contentDescription = "删除已完成",
-                    onClick = onDeleteClick,
-                    modifier = Modifier.padding(end = 8.dp),
-                )
-            }
+            val shown =
+                if (state.isTodayView) state.todayTasks else state.openTasks(state.currentCategory)
 
             AnimatedVisibility(
                 visible = state.tasks.values.isNotEmpty() && !isExpanded,
@@ -289,7 +266,7 @@ private fun TaskListTopBar(
                 CompleteModeButton(
                     checked = isCompleteMode,
                     onCheckedChange = onCompleteToggle,
-                    enabled = !state.tasks[state.currentCategory].isNullOrEmpty(),
+                    enabled = shown.isNotEmpty(),
                     modifier = Modifier.padding(end = 8.dp),
                 )
             }
@@ -304,7 +281,7 @@ private fun TaskListTopBar(
                     contentDescription = "调整顺序",
                     onClick = { onReorderToggle(!isReorderMode) },
                     checked = isReorderMode,
-                    enabled = !state.tasks[state.currentCategory].isNullOrEmpty(),
+                    enabled = shown.isNotEmpty(),
                     modifier = Modifier.padding(end = 12.dp),
                 )
             }
@@ -446,26 +423,13 @@ private fun CompactTasksView(
             val isTodayView = categoryId == TODAY_VIEW_ID
             val category = state.tasks.keys.firstOrNull { it.id == categoryId }
             if (isTodayView || category != null) {
-                // Categories flagged hideCompleted keep their done tasks out of every view.
-                val hiddenDoneCategoryIds =
-                    remember(state.tasks.keys) {
-                        state.tasks.keys.filter { it.hideCompleted }.map { it.id }.toSet()
-                    }
-                val sourceTasks =
-                    (if (isTodayView) state.todayTasks else state.tasks[category] ?: emptyList())
-                        .filter { !(it.isCompleted && it.categoryId in hiddenDoneCategoryIds) }
+                // Completed tasks are archived and shelved ones are out of the way: the list
+                // only holds what is open now.
+                val sourceTasks = if (isTodayView) state.todayTasks else state.openTasks(category)
 
                 val lazyListState = rememberLazyListState()
                 var reorderableTasks by
-                    remember(state.tasks.values) {
-                        mutableStateOf(
-                            sourceTasks.run {
-                                if (state.reorderTasks) {
-                                    filter { !it.isCompleted }
-                                } else this
-                            }
-                        )
-                    }
+                    remember(state.tasks.values, state.today) { mutableStateOf(sourceTasks) }
                 val reorderableListState =
                     rememberReorderableLazyListState(lazyListState) { from, to ->
                         reorderableTasks =
@@ -567,57 +531,6 @@ private fun CompactTasksView(
                         }
                     }
 
-                    if (state.reorderTasks) {
-                        val completedTasks = sourceTasks.filter { it.isCompleted }
-
-                        if (reorderableTasks.isNotEmpty()) {
-                            item { Spacer(modifier = Modifier.height(16.dp)) }
-                        }
-                        itemsIndexed(
-                            items = completedTasks,
-                            key = { _, it -> "completed_task_${it.id}" },
-                        ) { index, task ->
-                            val cardShape =
-                                when {
-                                    completedTasks.size == 1 -> RoundedCornerShape(GritRadius.xl)
-                                    index == 0 ->
-                                        RoundedCornerShape(
-                                            topStart = GritRadius.xl,
-                                            topEnd = GritRadius.xl,
-                                            bottomStart = GritRadius.join,
-                                            bottomEnd = GritRadius.join,
-                                        )
-
-                                    index == completedTasks.size - 1 ->
-                                        RoundedCornerShape(
-                                            topStart = GritRadius.join,
-                                            topEnd = GritRadius.join,
-                                            bottomStart = GritRadius.xl,
-                                            bottomEnd = GritRadius.xl,
-                                        )
-
-                                    else -> RoundedCornerShape(GritRadius.join)
-                                }
-
-                            TaskCard(
-                                task = task,
-                                dragState = false,
-                                reorderIcon = {},
-                                completeState = isCompleteMode,
-                                is24Hr = state.is24Hour,
-                                shape = cardShape,
-                                onDetailsClick = { onEditTask(task) },
-                                onSectionsChange = {
-                                    onAction(TaskAction.UpsertTask(task.copy(sections = it)))
-                                },
-                                modifier =
-                                    Modifier.fillMaxWidth()
-                                        .clip(cardShape)
-                                        .completionToggle(isCompleteMode, task, onAction),
-                            )
-                        }
-                    }
-
                     if (reorderableTasks.isEmpty()) {
                         item { Empty(modifier = Modifier.padding(top = 150.dp)) }
                     }
@@ -640,21 +553,9 @@ private fun ExpandedTasksView(
             orderIndex = -1,
             titleColor = null,
         )
-    // Categories flagged hideCompleted keep their done tasks out of every view.
-    val hiddenDoneCategoryIds =
-        remember(state.tasks.keys) {
-            state.tasks.keys.filter { it.hideCompleted }.map { it.id }.toSet()
-        }
     val tasksAndCategories =
-        listOf(
-            todayCategory to
-                state.todayTasks.filter {
-                    !(it.isCompleted && it.categoryId in hiddenDoneCategoryIds)
-                }
-        ) +
-            state.tasks.map { (cat, tasks) ->
-                cat to if (cat.hideCompleted) tasks.filter { !it.isCompleted } else tasks
-            }
+        listOf(todayCategory to state.todayTasks) +
+            state.tasks.keys.map { category -> category to state.openTasks(category) }
 
     LazyVerticalStaggeredGrid(
         columns = StaggeredGridCells.Adaptive(minSize = 350.dp),
@@ -665,7 +566,7 @@ private fun ExpandedTasksView(
     ) {
         items(tasksAndCategories, key = { it.first.id }) { (category, tasks) ->
             val isTodayPanel = category.id == TODAY_VIEW_ID
-            val displayTasks = if (state.reorderTasks) tasks.filter { !it.isCompleted } else tasks
+            val displayTasks = tasks
             var showReorderDialog by remember { mutableStateOf(false) }
             // Per panel: taps on this panel's cards toggle completion only while it is on.
             var completeMode by remember { mutableStateOf(false) }
@@ -755,54 +656,6 @@ private fun ExpandedTasksView(
                         )
                     }
 
-                    if (state.reorderTasks) {
-                        val completedTasks = tasks.filter { it.isCompleted }
-
-                        if (completedTasks.isNotEmpty()) {
-                            item { Spacer(modifier = Modifier.height(16.dp)) }
-                        }
-                        itemsIndexed(items = completedTasks, key = { _, it -> it.id }) { index, task
-                            ->
-                            val cardShape =
-                                when {
-                                    completedTasks.size == 1 -> RoundedCornerShape(GritRadius.xl)
-                                    index == 0 ->
-                                        RoundedCornerShape(
-                                            topStart = GritRadius.xl,
-                                            topEnd = GritRadius.xl,
-                                            bottomStart = GritRadius.join,
-                                            bottomEnd = GritRadius.join,
-                                        )
-
-                                    index == completedTasks.size - 1 ->
-                                        RoundedCornerShape(
-                                            topStart = GritRadius.join,
-                                            topEnd = GritRadius.join,
-                                            bottomStart = GritRadius.xl,
-                                            bottomEnd = GritRadius.xl,
-                                        )
-
-                                    else -> RoundedCornerShape(GritRadius.join)
-                                }
-
-                            TaskCard(
-                                task = task,
-                                dragState = false,
-                                reorderIcon = {},
-                                completeState = completeMode,
-                                is24Hr = state.is24Hour,
-                                shape = cardShape,
-                                onDetailsClick = { onEditTask(task) },
-                                onSectionsChange = {
-                                    onAction(TaskAction.UpsertTask(task.copy(sections = it)))
-                                },
-                                modifier =
-                                    Modifier.fillMaxWidth()
-                                        .clip(cardShape)
-                                        .completionToggle(completeMode, task, onAction),
-                            )
-                        }
-                    }
                     if (tasks.isEmpty()) {
                         item { Empty(modifier = Modifier.padding(32.dp)) }
                     }
@@ -915,7 +768,7 @@ private fun ExpandedTasksView(
     }
 }
 
-/** Switch beside "调整顺序": while it is on, tapping a task card toggles its completion. */
+/** Switch beside "调整顺序": while it is on, tapping a task card completes the task. */
 @Composable
 private fun CompleteModeButton(
     checked: Boolean,
@@ -925,7 +778,7 @@ private fun CompleteModeButton(
 ) {
     GlassIconButton(
         icon = vectorResource(Res.drawable.check_circle),
-        contentDescription = "切换完成状态",
+        contentDescription = "点按任务卡完成任务",
         onClick = { onCheckedChange(!checked) },
         checked = checked,
         enabled = enabled,
@@ -934,69 +787,12 @@ private fun CompleteModeButton(
 }
 
 /**
- * A tap toggles the task's completion only when [enabled] (the completion switch is on). When off
- * the card takes no taps at all, so a touch that starts a scroll can't finish a task.
+ * A tap completes the task, which archives it, only when [enabled] (the completion switch is on).
+ * When off the card takes no taps at all, so a touch that starts a scroll can't finish a task.
  */
 private fun Modifier.completionToggle(
     enabled: Boolean,
     task: Task,
     onAction: (TaskAction) -> Unit,
 ): Modifier =
-    clickable(enabled = enabled) {
-        onAction(TaskAction.UpsertTask(task.copy(isCompleted = !task.isCompleted)))
-    }
-
-@Composable
-private fun DeleteTasksDialog(onDismiss: () -> Unit, onConfirm: () -> Unit) {
-    GritDialog(onDismissRequest = onDismiss) {
-        Column {
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier =
-                    Modifier.size(48.dp)
-                        .background(
-                            color = MaterialTheme.colorScheme.primaryContainer,
-                            shape = MaterialShapes.Pill.toShape(),
-                        ),
-            ) {
-                Icon(
-                    imageVector = vectorResource(Res.drawable.warning),
-                    contentDescription = "Warning",
-                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                )
-            }
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = stringResource(Res.string.delete),
-                style = MaterialTheme.typography.headlineSmall.copy(fontFamily = flexFontEmphasis()),
-            )
-            Text(
-                text = stringResource(Res.string.delete_tasks),
-                style = MaterialTheme.typography.bodyLarge,
-            )
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                TextButton(
-                    onClick = onDismiss,
-                    shapes =
-                        ButtonShapes(
-                            shape = MaterialTheme.shapes.extraLarge,
-                            pressedShape = MaterialTheme.shapes.small,
-                        ),
-                ) {
-                    Text(stringResource(Res.string.cancel))
-                }
-
-                TextButton(
-                    onClick = onConfirm,
-                    shapes =
-                        ButtonShapes(
-                            shape = MaterialTheme.shapes.extraLarge,
-                            pressedShape = MaterialTheme.shapes.small,
-                        ),
-                ) {
-                    Text(stringResource(Res.string.delete))
-                }
-            }
-        }
-    }
-}
+    clickable(enabled = enabled) { onAction(TaskAction.UpsertTask(task.copy(isCompleted = true))) }

@@ -74,6 +74,7 @@ import com.shub39.grit.shared.ui.LocalWindowSizeClass
 import com.shub39.grit.shared.ui.app.AppSections.Companion.toIconRes
 import com.shub39.grit.shared.ui.app.AppSections.Companion.toStringRes
 import com.shub39.grit.shared.ui.navigation.fadeTransitionMetadata
+import com.shub39.grit.shared.ui.overview.ui.OverviewPage
 import com.shub39.grit.shared.ui.setting.ui.SettingsGraph
 import com.shub39.grit.shared.ui.task.ui.TasksPage
 import com.shub39.grit.shared.ui.theme.GlassTier
@@ -93,6 +94,7 @@ fun MainApp(state: MainAppState, onNavigateToPaywall: () -> Unit) {
             AppSections.configuration,
             when (state.startingSection) {
                 Tasks -> AppSections.TaskPages
+                Overview -> AppSections.OverviewPages
                 Settings -> AppSections.SettingsPages
             },
         )
@@ -127,6 +129,15 @@ fun MainApp(state: MainAppState, onNavigateToPaywall: () -> Unit) {
 
                                     // Lists run on beneath the bar; editors stop above it.
                                     TasksPage(state = taskPageState, onAction = tvm::onAction)
+                                }
+
+                                entry<AppSections.OverviewPages>(
+                                    metadata = fadeTransitionMetadata()
+                                ) {
+                                    val tvm: TasksViewModel = koinViewModel()
+                                    val taskPageState by tvm.state.collectAsStateWithLifecycle()
+
+                                    OverviewPage(state = taskPageState, onAction = tvm::onAction)
                                 }
 
                                 entry<AppSections.SettingsPages>(
@@ -180,6 +191,13 @@ fun MainApp(state: MainAppState, onNavigateToPaywall: () -> Unit) {
                                 val taskPageState by tvm.state.collectAsStateWithLifecycle()
 
                                 TasksPage(state = taskPageState, onAction = tvm::onAction)
+                            }
+
+                            entry<AppSections.OverviewPages>(metadata = fadeTransitionMetadata()) {
+                                val tvm: TasksViewModel = koinViewModel()
+                                val taskPageState by tvm.state.collectAsStateWithLifecycle()
+
+                                OverviewPage(state = taskPageState, onAction = tvm::onAction)
                             }
 
                             entry<AppSections.SettingsPages>(metadata = fadeTransitionMetadata()) {

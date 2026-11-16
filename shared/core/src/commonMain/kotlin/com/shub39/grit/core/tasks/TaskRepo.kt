@@ -46,6 +46,9 @@ interface TaskRepo {
 
     suspend fun deleteAllCategories()
 
+    /** Takes every task off Today without counting as work on it. */
+    suspend fun clearToday()
+
     suspend fun reorderTasks(categoryId: Long, ids: List<Long>)
 
     suspend fun reorderCategories(ids: List<Long>)

@@ -23,6 +23,7 @@ import com.shub39.grit.shared.ui.components.glass.GlassIconButton
 import com.shub39.grit.shared.ui.components.glass.GlassAlertDialog
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -81,7 +82,12 @@ import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
+import com.shub39.grit.core.nextMonday
 import com.shub39.grit.core.now
+import com.shub39.grit.core.tasks.Priority
+import com.shub39.grit.shared.ui.components.DayPickerDialog
+import com.shub39.grit.shared.ui.components.glass.GlassSegmented
+import com.shub39.grit.shared.ui.overview.ui.component.label
 import com.shub39.grit.core.tasks.Category
 import com.shub39.grit.core.tasks.Section
 import com.shub39.grit.core.tasks.Task
@@ -98,7 +104,10 @@ import grit.shared.ui.generated.resources.*
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Instant
 import kotlinx.coroutines.delay
+import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.plus
 import kotlinx.datetime.LocalTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -106,6 +115,12 @@ import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.resources.vectorResource
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
+
+/** Which of the task's days the day picker is open for. */
+private enum class DayField {
+    Deadline,
+    HiddenUntil,
+}
 
 /** A section being edited, with a stable [uid] independent of its list position. */
 private data class SectionItem(val uid: Int, val section: Section)
@@ -198,6 +213,8 @@ fun TaskUpsertSheetContent(
     var editingSection by remember { mutableStateOf<SectionItem?>(null) }
 
     var reorderSections by remember { mutableStateOf(false) }
+    var pickingDay by remember { mutableStateOf<DayField?>(null) }
+    val today = remember { LocalDate.now() }
     var showUnsaved by remember { mutableStateOf(false) }
     var showTaskDelete by remember { mutableStateOf(false) }
     var movingSection by remember { mutableStateOf<SectionItem?>(null) }
@@ -369,8 +386,64 @@ fun TaskUpsertSheetContent(
                     enabled = !saving,
                 )
             }
+            // When it is due and how much it matters: the card's size and shade on the wall.
             item {
                 ListItem(
+                    modifier =
+                        Modifier.clip(detachedItemShape()).clickable(enabled = !saving) {
+                            pickingDay = DayField.Deadline
+                        },
+                    colors = listItemColors(),
+                    leadingContent = {
+                        Icon(
+                            imageVector = vectorResource(Res.drawable.calendar_month),
+                            contentDescription = null,
+                        )
+                    },
+                    headlineContent = { Text("DDL") },
+                    supportingContent = {
+                        Text(newTask.deadline?.label(today) ?: "没有 DDL。点按选一天")
+                    },
+                    trailingContent = {
+                        if (newTask.deadline != null)
+                            IconButton(
+                                enabled = !saving,
+                                onClick = { newTask = newTask.copy(deadline = null) },
+                            ) {
+                                Icon(
+                                    imageVector = vectorResource(Res.drawable.close),
+                                    contentDescription = "去掉 DDL",
+                                )
+                            }
+                    },
+                )
+            }
+            item {
+                ListItem(
+                    modifier = Modifier.clip(detachedItemShape()),
+                    colors = listItemColors(),
+                    leadingContent = {
+                        Icon(
+                            imageVector = vectorResource(Res.drawable.flag),
+                            contentDescription = null,
+                        )
+                    },
+                    headlineContent = { Text("优先级") },
+                    supportingContent = {
+                        GlassSegmented(
+                            options = Priority.entries,
+                            selected = newTask.priority,
+                            onSelect = { newTask = newTask.copy(priority = it) },
+                            label = { it.label() },
+                            enabled = !saving,
+                            modifier = Modifier.padding(top = 6.dp),
+                        )
+                    },
+                )
+            }
+            item {
+                ListItem(
+                    modifier = Modifier.clip(detachedItemShape()),
                     headlineContent = { Text("任务已完成") },
                     trailingContent = {
                         ExpressiveSwitch(
@@ -429,9 +502,6 @@ fun TaskUpsertSheetContent(
                                     )
                                 }
                             }
-                        },
-                        supportingContent = {
-                            step.section.completedOn?.let { Text(it.toString()) }
                         },
                         leadingContent = {
                             IconButton(
@@ -522,6 +592,85 @@ fun TaskUpsertSheetContent(
                             enabled = !saving,
                             checked = newTask.isToday,
                             onCheckedChange = { newTask = newTask.copy(isToday = it) },
+                        )
+                    },
+                )
+            }
+
+            // Shelving: off the Task page and the wall until a day, or until it is taken back.
+            item {
+                ListItem(
+                    modifier = Modifier.clip(detachedItemShape()),
+                    colors = listItemColors(),
+                    leadingContent = {
+                        Icon(
+                            imageVector = vectorResource(Res.drawable.schedule),
+                            contentDescription = null,
+                        )
+                    },
+                    headlineContent = { Text("挂起") },
+                    supportingContent = {
+                        Column {
+                            val until = newTask.hiddenUntil?.takeIf { it > today }
+                            Text(
+                                if (until != null) "到 ${until.label(today)} 再回到 Task 页和任务墙"
+                                else "到选定的那天之前，不出现在 Task 页和任务墙上"
+                            )
+                            FlowRow(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                val day: (LocalDate?) -> Unit = {
+                                    newTask = newTask.copy(hiddenUntil = it)
+                                }
+                                TextButton(
+                                    enabled = !saving,
+                                    onClick = { day(today.plus(1, DateTimeUnit.DAY)) },
+                                ) {
+                                    Text("明天")
+                                }
+                                TextButton(
+                                    enabled = !saving,
+                                    onClick = { day(today.nextMonday()) },
+                                ) {
+                                    Text("下周一")
+                                }
+                                TextButton(
+                                    enabled = !saving,
+                                    onClick = { day(today.plus(1, DateTimeUnit.MONTH)) },
+                                ) {
+                                    Text("一个月后")
+                                }
+                                TextButton(
+                                    enabled = !saving,
+                                    onClick = { pickingDay = DayField.HiddenUntil },
+                                ) {
+                                    Text("选日期")
+                                }
+                                if (until != null)
+                                    TextButton(enabled = !saving, onClick = { day(null) }) {
+                                        Text("不挂起")
+                                    }
+                            }
+                        }
+                    },
+                )
+            }
+
+            item {
+                ListItem(
+                    modifier = Modifier.clip(detachedItemShape()),
+                    colors = listItemColors(),
+                    leadingContent = {
+                        Icon(
+                            imageVector = vectorResource(Res.drawable.view_day),
+                            contentDescription = null,
+                        )
+                    },
+                    headlineContent = { Text("以后再说") },
+                    supportingContent = { Text("先放一边，不定日期。只留在总览的“以后再说”里") },
+                    trailingContent = {
+                        ExpressiveSwitch(
+                            enabled = !saving,
+                            checked = newTask.isSomeday,
+                            onCheckedChange = { newTask = newTask.copy(isSomeday = it) },
                         )
                     },
                 )
@@ -764,6 +913,27 @@ fun TaskUpsertSheetContent(
                 editingSection = null
             },
             onDismiss = { editingSection = null },
+        )
+    }
+
+    pickingDay?.let { field ->
+        DayPickerDialog(
+            initial =
+                when (field) {
+                    DayField.Deadline -> newTask.deadline
+                    DayField.HiddenUntil -> newTask.hiddenUntil?.takeIf { it > today }
+                },
+            // A task cannot be suspended until a day that has already come.
+            notBefore = if (field == DayField.HiddenUntil) today.plus(1, DateTimeUnit.DAY) else null,
+            onPick = {
+                newTask =
+                    when (field) {
+                        DayField.Deadline -> newTask.copy(deadline = it)
+                        DayField.HiddenUntil -> newTask.copy(hiddenUntil = it)
+                    }
+                pickingDay = null
+            },
+            onDismiss = { pickingDay = null },
         )
     }
 

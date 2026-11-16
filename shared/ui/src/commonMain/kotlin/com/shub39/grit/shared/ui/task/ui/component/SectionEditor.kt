@@ -26,10 +26,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
-import com.shub39.grit.core.now
 import com.shub39.grit.core.tasks.Section
 import com.shub39.grit.shared.ui.components.TitleColorRow
-import kotlinx.datetime.LocalDate
 
 @Composable
 fun SectionEditor(
@@ -47,12 +45,8 @@ fun SectionEditor(
     var title by remember(section.id) { mutableStateOf(section.title) }
     var content by remember(section.id) { mutableStateOf(section.content) }
     var titleColor by remember(section.id) { mutableStateOf(section.titleColor) }
-    var dateText by
-        remember(section.id) { mutableStateOf(section.completedOn?.toString().orEmpty()) }
+    var completed by remember(section.id) { mutableStateOf(section.isCompleted) }
     var confirmDelete by remember { mutableStateOf(false) }
-    val date =
-        if (dateText.isBlank()) null else runCatching { LocalDate.parse(dateText) }.getOrNull()
-    val valid = dateText.isBlank() || (date != null && date <= LocalDate.now())
     val fields: @Composable () -> Unit = {
         Column(
             Modifier.fillMaxWidth()
@@ -88,35 +82,25 @@ fun SectionEditor(
             )
             Row {
                 Checkbox(
-                    checked = dateText.isNotBlank(),
+                    checked = completed,
                     enabled = !saving,
-                    onCheckedChange = { dateText = if (it) LocalDate.now().toString() else "" },
+                    onCheckedChange = { completed = it },
                 )
                 Text("已完成", Modifier.padding(top = 12.dp))
             }
-            OutlinedTextField(
-                dateText,
-                { dateText = it },
-                label = { Text("完成日期 YYYY-MM-DD") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                enabled = !saving,
-                isError = !valid,
-                supportingText = { Text(if (valid) "留空表示未完成，可补记过去日期" else "请输入有效日期，不能晚于今天") },
-            )
         }
     }
     val saveButton: @Composable () -> Unit = {
         TextButton(
             modifier = if (compactIme) Modifier.height(36.dp) else Modifier,
-            enabled = valid && !saving,
+            enabled = !saving,
             onClick = {
                 onSave(
                     section
                         .copy(
                             title = title,
                             content = content,
-                            completedOn = date,
+                            isCompleted = completed,
                             titleColor = titleColor,
                         )
                         .normalized()

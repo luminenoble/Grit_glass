@@ -126,13 +126,22 @@ class TasksRepository(
                 val position =
                     if (previous == null || moved) tasks.getInCategory(task.categoryId).size
                     else previous.orderIndex
+                val saved = task.copy(title = task.title.trim(), sections = prepared)
                 val entity =
-                    task
+                    saved
                         .copy(
                             orderIndex = position,
-                            title = task.title.trim(),
                             createdAt = previous?.createdAt ?: now,
                             updatedAt = now,
+                            lastTouchedAt =
+                                if (touches(previous, saved)) now else previous!!.lastTouchedAt,
+                            // Completing archives the task at this moment; reopening clears it.
+                            completedAt =
+                                when {
+                                    !saved.isCompleted -> null
+                                    previous?.isCompleted == true -> previous.completedAt ?: now
+                                    else -> now
+                                },
                         )
                         .toTaskEntity()
                 val inserted = tasks.upsert(entity)
@@ -252,6 +261,11 @@ class TasksRepository(
                 old
             }
         refresh(removed)
+    }
+
+    override suspend fun clearToday() {
+        tasks.clearToday()
+        refresh()
     }
 
     override suspend fun reorderTasks(categoryId: Long, ids: List<Long>) {
