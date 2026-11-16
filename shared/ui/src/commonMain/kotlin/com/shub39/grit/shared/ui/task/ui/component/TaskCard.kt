@@ -17,15 +17,15 @@
 package com.shub39.grit.shared.ui.task.ui.component
 
 import androidx.compose.ui.graphics.Color
+import com.shub39.grit.shared.ui.theme.GlassShapes
 import com.shub39.grit.shared.ui.theme.GlassTier
 import com.shub39.grit.shared.ui.theme.GlassTokens
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.style.TextOverflow
 import com.shub39.grit.shared.ui.theme.glassSurface
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
@@ -35,6 +35,7 @@ import com.shub39.grit.core.now
 import com.shub39.grit.core.tasks.*
 import com.shub39.grit.core.toFormattedString
 import com.shub39.grit.shared.ui.theme.withTitleColor
+import com.shub39.grit.shared.ui.theme.withoutFontPadding
 import grit.shared.ui.generated.resources.*
 import com.shub39.grit.shared.ui.overview.ui.component.label
 import kotlinx.datetime.LocalDate
@@ -49,7 +50,7 @@ fun TaskCard(
     completeState: Boolean = false,
     is24Hr: Boolean,
     modifier: Modifier = Modifier,
-    shape: Shape = RoundedCornerShape(12.dp),
+    shape: Shape = GlassShapes.CardCompact,
     onDetailsClick: (() -> Unit)? = null,
     onSectionsChange: ((List<Section>) -> Unit)? = null,
 ) {
@@ -85,6 +86,7 @@ fun TaskCard(
                             task.title,
                             style =
                                 MaterialTheme.typography.titleMedium
+                                    .withoutFontPadding()
                                     .copy(
                                         textDecoration =
                                             if (done) TextDecoration.LineThrough else null
@@ -106,11 +108,18 @@ fun TaskCard(
                         )
                 }
                 if (task.description.isNotBlank())
-                    Text(task.description, style = MaterialTheme.typography.bodySmall, maxLines = 1)
+                    Text(
+                        task.description,
+                        style = MaterialTheme.typography.bodySmall,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
                 if (task.sections.isNotEmpty()) {
                     Text(
                         "${task.sections.count { it.isCompleted }}/${task.sections.size} Section",
                         Modifier.clickable { expanded = !expanded }.padding(vertical = 8.dp),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = GlassTokens.SecondaryText,
                     )
                     AnimatedVisibility(expanded) {
                         Column {
@@ -132,12 +141,12 @@ fun TaskCard(
                                     Box(Modifier.weight(1f)) {
                                         Text(
                                             section.title,
-                                            Modifier.basicMarquee(),
                                             maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis,
                                             style =
                                                 LocalTextStyle.current.withTitleColor(
                                                     section.titleColor,
-                                                    Color.Black,
+                                                    MaterialTheme.colorScheme.onSurface,
                                                 ),
                                         )
                                     }

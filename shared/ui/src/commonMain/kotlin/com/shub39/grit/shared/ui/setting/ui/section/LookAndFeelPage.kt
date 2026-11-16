@@ -16,25 +16,32 @@
  */
 package com.shub39.grit.shared.ui.setting.ui.section
 
-import com.shub39.grit.shared.ui.theme.LocalFloatingBarInset
-import androidx.compose.foundation.layout.padding
-import grit.shared.ui.generated.resources.Res
-import grit.shared.ui.generated.resources.nav_arrow_back
-import org.jetbrains.compose.resources.vectorResource
-import com.shub39.grit.shared.ui.components.glass.GlassIconButton
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import com.shub39.grit.core.theme.Fonts
 import com.shub39.grit.shared.ui.components.ExpressiveSwitch
+import com.shub39.grit.shared.ui.components.GlassGroup
 import com.shub39.grit.shared.ui.components.detachedItemShape
+import com.shub39.grit.shared.ui.components.glass.GlassIconButton
 import com.shub39.grit.shared.ui.components.glassItem
 import com.shub39.grit.shared.ui.components.glassListItemColors
 import com.shub39.grit.shared.ui.setting.*
+import com.shub39.grit.shared.ui.theme.GlassTokens
+import com.shub39.grit.shared.ui.theme.LocalFloatingBarInset
+import com.shub39.grit.shared.ui.theme.flexFontEmphasis
 import com.shub39.grit.shared.ui.toDisplayString
+import grit.shared.ui.generated.resources.Res
+import grit.shared.ui.generated.resources.nav_arrow_back
+import org.jetbrains.compose.resources.vectorResource
 
 @Composable
 fun LookAndFeelPage(
@@ -44,9 +51,9 @@ fun LookAndFeelPage(
     onNavigateToPaywall: () -> Unit,
     onNavigateBack: () -> Unit,
 ) {
-    Column {
+    Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         TopAppBar(
-            title = { Text("Look and Feel") },
+            title = { Text("Look and Feel", fontFamily = flexFontEmphasis()) },
             navigationIcon = {
                 GlassIconButton(
                     icon = vectorResource(Res.drawable.nav_arrow_back),
@@ -57,18 +64,24 @@ fun LookAndFeelPage(
             },
         )
         LazyColumn(
+            modifier = Modifier.fillMaxSize(),
             contentPadding =
                 PaddingValues(
-                    start = 16.dp,
+                    start = 12.dp,
                     top = 16.dp,
-                    end = 16.dp,
-                    bottom = LocalFloatingBarInset.current + 16.dp,
-                )
+                    end = 12.dp,
+                    bottom = LocalFloatingBarInset.current + 24.dp,
+                ),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             item {
                 ListItem(
                     headlineContent = { Text("Reduce transparency") },
-                    supportingContent = { Text("Makes glass opaque and turns off background blur, for readability and performance") },
+                    supportingContent = {
+                        Text(
+                            "Makes glass opaque and turns off background blur, for readability and performance"
+                        )
+                    },
                     trailingContent = {
                         ExpressiveSwitch(
                             checked = state.theme.reduceTransparency,
@@ -78,18 +91,42 @@ fun LookAndFeelPage(
                         )
                     },
                     colors = glassListItemColors(),
-                    modifier = Modifier.padding(bottom = 12.dp).glassItem(detachedItemShape()),
+                    modifier =
+                        Modifier.glassItem(detachedItemShape()).clickable {
+                            onAction(
+                                SettingsAction.ChangeReduceTransparency(
+                                    !state.theme.reduceTransparency
+                                )
+                            )
+                        },
                 )
             }
-            item { Text("Font", Modifier.padding(8.dp), style = MaterialTheme.typography.titleSmall) }
-            items(Fonts.entries.size) { index ->
-                val font = Fonts.entries[index]
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text(font.toDisplayString(), Modifier.padding(16.dp))
-                    RadioButton(
-                        selected = state.theme.font == font,
-                        onClick = { onAction(SettingsAction.ChangeFontPref(font)) },
+            item {
+                Column(Modifier.selectableGroup()) {
+                    Text(
+                        "Font",
+                        Modifier.padding(start = 4.dp, bottom = 8.dp),
+                        style = MaterialTheme.typography.titleSmall,
+                        color = GlassTokens.SecondaryText,
                     )
+                    GlassGroup {
+                        Fonts.entries.forEach { font ->
+                            val selected = state.theme.font == font
+                            ListItem(
+                                headlineContent = { Text(font.toDisplayString()) },
+                                trailingContent = {
+                                    RadioButton(selected = selected, onClick = null)
+                                },
+                                colors = glassListItemColors(),
+                                modifier =
+                                    Modifier.selectable(
+                                        selected = selected,
+                                        role = Role.RadioButton,
+                                        onClick = { onAction(SettingsAction.ChangeFontPref(font)) },
+                                    ),
+                            )
+                        }
+                    }
                 }
             }
         }

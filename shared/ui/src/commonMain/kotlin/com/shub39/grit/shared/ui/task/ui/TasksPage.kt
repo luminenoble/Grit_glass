@@ -31,16 +31,14 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.ButtonShapes
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
-import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -51,6 +49,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
@@ -60,11 +59,8 @@ import androidx.savedstate.serialization.SavedStateConfiguration
 import com.shub39.grit.core.tasks.Category
 import com.shub39.grit.core.tasks.Task
 import com.shub39.grit.shared.ui.components.GritDialog
-import com.shub39.grit.shared.ui.components.detachedItemShape
-import com.shub39.grit.shared.ui.components.endItemShape
-import com.shub39.grit.shared.ui.components.leadingItemShape
+import com.shub39.grit.shared.ui.components.groupedItemShape
 import com.shub39.grit.shared.ui.components.listItemColors
-import com.shub39.grit.shared.ui.components.middleItemShape
 import com.shub39.grit.shared.ui.navigation.horizontalTransitionMetadata
 import com.shub39.grit.shared.ui.task.TaskAction
 import com.shub39.grit.shared.ui.task.TaskState
@@ -72,6 +68,7 @@ import com.shub39.grit.shared.ui.task.ui.component.ArchiveToast
 import com.shub39.grit.shared.ui.task.ui.component.CategoryUpsertSheet
 import com.shub39.grit.shared.ui.task.ui.component.TaskUpsertSheet
 import com.shub39.grit.shared.ui.task.ui.section.TaskList
+import com.shub39.grit.shared.ui.theme.GritRadius
 import com.shub39.grit.shared.ui.theme.flexFontEmphasis
 import grit.shared.ui.generated.resources.*
 import grit.shared.ui.generated.resources.add
@@ -254,7 +251,7 @@ private fun CategoryEditDialog(
             modifier =
                 Modifier.fillMaxWidth()
                     .heightIn(max = 600.dp)
-                    .padding(start = 16.dp, end = 16.dp, top = 16.dp),
+                    .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             Box(
@@ -263,7 +260,7 @@ private fun CategoryEditDialog(
                     Modifier.size(48.dp)
                         .background(
                             color = MaterialTheme.colorScheme.primaryContainer,
-                            shape = MaterialShapes.Pill.toShape(),
+                            shape = CircleShape,
                         ),
             ) {
                 Icon(
@@ -281,28 +278,32 @@ private fun CategoryEditDialog(
             LazyColumn(
                 modifier =
                     Modifier.fillMaxWidth()
-                        .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)),
+                        .clip(RoundedCornerShape(GritRadius.md)),
                 state = listState,
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(2.dp),
-                contentPadding = PaddingValues(bottom = 16.dp),
             ) {
                 itemsIndexed(categories, key = { _, it -> it.id }) { index, category ->
                     var showDeleteDialog by remember { mutableStateOf(false) }
 
                     ReorderableItem(reorderableListState, key = category.id) {
                         val shape =
-                            when {
-                                categories.size == 1 -> detachedItemShape()
-                                index == 0 -> leadingItemShape()
-                                index == categories.size - 1 -> endItemShape()
-                                else -> middleItemShape()
-                            }
+                            groupedItemShape(
+                                index = index,
+                                count = categories.size,
+                                endRadius = GritRadius.md,
+                            )
 
                         ListItem(
                             modifier = Modifier.clip(shape),
                             colors = listItemColors(),
-                            headlineContent = { Text(text = category.name, maxLines = 1) },
+                            headlineContent = {
+                                Text(
+                                    text = category.name,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                            },
                             supportingContent = {
                                 Text(
                                     text =
@@ -369,14 +370,7 @@ private fun CategoryEditDialog(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.End,
                             ) {
-                                TextButton(
-                                    onClick = { showDeleteDialog = false },
-                                    shapes =
-                                        ButtonShapes(
-                                            shape = MaterialTheme.shapes.extraLarge,
-                                            pressedShape = MaterialTheme.shapes.small,
-                                        ),
-                                ) {
+                                TextButton(onClick = { showDeleteDialog = false }) {
                                     Text(stringResource(Res.string.cancel))
                                 }
 
@@ -384,12 +378,7 @@ private fun CategoryEditDialog(
                                     onClick = {
                                         onAction(TaskAction.DeleteCategory(category))
                                         showDeleteDialog = false
-                                    },
-                                    shapes =
-                                        ButtonShapes(
-                                            shape = MaterialTheme.shapes.extraLarge,
-                                            pressedShape = MaterialTheme.shapes.small,
-                                        ),
+                                    }
                                 ) {
                                     Text(stringResource(Res.string.delete))
                                 }

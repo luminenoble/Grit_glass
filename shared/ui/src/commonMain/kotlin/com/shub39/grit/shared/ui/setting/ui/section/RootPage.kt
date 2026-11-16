@@ -405,7 +405,9 @@ private fun WallSettingsGroup(wall: WallSettings, onChange: (WallSettings) -> Un
             headlineContent = { Text("Wall card size") },
             supportingContent = {
                 Column {
-                    Text("The closer the deadline, the larger the card. Tasks beyond the last limit, or without a deadline, get the smallest card.")
+                    Text(
+                        "Days left for each card size (Largest / Large / Medium). Tasks beyond the last limit, or without a deadline, get the smallest card."
+                    )
                     // Typing passes through states that are not valid yet (a ≥ b); those stay in
                     // the fields and are saved once the three days rise again.
                     var days by
@@ -430,7 +432,6 @@ private fun WallSettingsGroup(wall: WallSettings, onChange: (WallSettings) -> Un
                                         onChange(wall.copy(thresholds = next))
                                 },
                                 label = { Text(size) },
-                                suffix = { Text("days") },
                                 singleLine = true,
                                 isError = typed?.isValid != true,
                                 keyboardOptions =

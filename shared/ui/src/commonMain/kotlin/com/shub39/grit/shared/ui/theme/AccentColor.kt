@@ -17,12 +17,39 @@
 package com.shub39.grit.shared.ui.theme
 
 import androidx.compose.ui.graphics.*
+import androidx.compose.ui.graphics.colorspace.ColorSpaces
 import androidx.compose.ui.text.TextStyle
 import com.shub39.grit.core.tasks.titleColorStops
+
+/** Max relative luminance for user-chosen text colours on warm beige paper (~4.5:1 on #F0EBE2). */
+private const val MAX_PAPER_TEXT_LUMINANCE = 0.145f
+
+/**
+ * Darkens overly light colours in linear RGB so user-chosen [titleColor] values remain legible on
+ * warm beige paper without altering what is stored.
+ */
+fun Color.ensureReadableOnPaper(maxLuminance: Float = MAX_PAPER_TEXT_LUMINANCE): Color {
+    val linear = convert(ColorSpaces.LinearSrgb)
+    val lum = 0.2126f * linear.red + 0.7152f * linear.green + 0.0722f * linear.blue
+    if (lum <= maxLuminance) return this
+    val factor = (maxLuminance / lum).coerceIn(0f, 1f)
+    return Color(
+            red = linear.red * factor,
+            green = linear.green * factor,
+            blue = linear.blue * factor,
+            alpha = linear.alpha,
+            colorSpace = ColorSpaces.LinearSrgb,
+        )
+        .convert(ColorSpaces.Srgb)
+}
 
 /** Stops of a stored title colour (one for a solid colour), or null when unset or malformed. */
 fun parseTitleColors(value: String?): List<Color>? =
     titleColorStops(value)?.map { Color(0xFF000000 or it.toLong()) }
+
+/** Stops clamped for text contrast on warm paper, or null when unset or malformed. */
+fun readableTitleColors(value: String?): List<Color>? =
+    parseTitleColors(value)?.map { it.ensureReadableOnPaper() }
 
 /** The solid colour, or the first stop of a gradient. */
 fun parseAccentColor(value: String?): Color? = parseTitleColors(value)?.first()
@@ -33,7 +60,7 @@ fun Color.toHexString(): String =
 /** Stored form of [colors]: "#RRGGBB", or a comma-separated gradient. */
 fun titleColorValue(colors: List<Color>): String = colors.joinToString(",") { it.toHexString() }
 
-/** Selected text colour exactly as chosen (no contrast adjustment); a gradient's first stop. */
+/** Selected text colour as stored; a gradient's first stop. */
 fun titleColor(value: String?, default: Color = GritBaseColors.onSurface): Color =
     parseAccentColor(value) ?: default
 
@@ -44,15 +71,16 @@ fun titleBrush(value: String?, default: Color = GritBaseColors.onSurface): Brush
 }
 
 /**
- * [this] drawn in the stored title colour: a solid colour, or a left-to-right gradient across the
- * text. A gradient brush wins over any `color` passed to Text alongside the style.
+ * [this] drawn in the stored title colour (contrast-protected against warm paper): a solid colour,
+ * or a left-to-right gradient across the text. A gradient brush wins over any `color` passed to
+ * Text alongside the style.
  */
 fun TextStyle.withTitleColor(
     value: String?,
     default: Color = GritBaseColors.onSurface,
     alpha: Float = 1f,
 ): TextStyle {
-    val colors = parseTitleColors(value)
+    val colors = readableTitleColors(value)
     return if (colors == null || colors.size == 1) {
         val c = colors?.first() ?: default
         copy(color = c.copy(alpha = c.alpha * alpha))

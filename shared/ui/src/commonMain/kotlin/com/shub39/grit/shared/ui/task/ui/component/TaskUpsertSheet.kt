@@ -39,27 +39,22 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.input.rememberTextFieldState
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonShapes
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
-import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.LocalTextStyle
-import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberTimePickerState
-import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.graphics.Color
@@ -81,6 +76,7 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.shub39.grit.core.nextMonday
 import com.shub39.grit.core.now
@@ -98,6 +94,7 @@ import com.shub39.grit.shared.ui.components.GritBottomSheet
 import com.shub39.grit.shared.ui.components.GritTimePicker
 import com.shub39.grit.shared.ui.components.detachedItemShape
 import com.shub39.grit.shared.ui.components.listItemColors
+import com.shub39.grit.shared.ui.theme.GlassShapes
 import com.shub39.grit.shared.ui.theme.flexFontEmphasis
 import com.shub39.grit.shared.ui.theme.withTitleColor
 import grit.shared.ui.generated.resources.*
@@ -263,7 +260,7 @@ fun TaskUpsertSheetContent(
                         Modifier.size(48.dp)
                             .background(
                                 color = MaterialTheme.colorScheme.primaryContainer,
-                                shape = MaterialShapes.Pill.toShape(),
+                                shape = CircleShape,
                             ),
                 ) {
                     Icon(
@@ -303,7 +300,7 @@ fun TaskUpsertSheetContent(
         LazyColumn(
             modifier =
                 Modifier.fillMaxWidth()
-                    .clip(MaterialTheme.shapes.large)
+                    .clip(GlassShapes.Card)
                     // Full screen: bound this to the space left under the TopAppBar so it
                     // scrolls internally instead of pushing content past the screen edge.
                     .then(if (fullScreen) Modifier.weight(1f) else Modifier),
@@ -324,7 +321,13 @@ fun TaskUpsertSheetContent(
                             enabled = !saving,
                             checked = category.id == newTask.categoryId,
                             onCheckedChange = { newTask = newTask.copy(categoryId = category.id) },
-                            content = { Text(category.name) },
+                            content = {
+                                Text(
+                                    category.name,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                            },
                         )
                     }
                 }
@@ -480,7 +483,7 @@ fun TaskUpsertSheetContent(
             items(sectionItems, key = { "section_${it.uid}" }) { step ->
                 ReorderableItem(sectionsReorderState, key = "section_${step.uid}") {
                     ListItem(
-                        modifier = Modifier.clip(MaterialTheme.shapes.medium),
+                        modifier = Modifier.clip(detachedItemShape()),
                         colors = listItemColors(),
                         headlineContent = {
                             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -496,7 +499,7 @@ fun TaskUpsertSheetContent(
                                         style =
                                             LocalTextStyle.current.withTitleColor(
                                                 step.section.titleColor,
-                                                Color.Black,
+                                                MaterialTheme.colorScheme.onSurface,
                                             ),
                                         modifier = Modifier.basicMarquee(),
                                     )

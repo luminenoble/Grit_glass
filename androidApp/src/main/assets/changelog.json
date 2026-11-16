@@ -1,5 +1,17 @@
 [
   {
+    "version": "1.1.1.1",
+    "changes": [
+      "Task wall & cards: removed the 48–68% title colour fade on normal/low priority cards and added perceived-luminance contrast clamping so light user-chosen text colours stay legible against warm beige paper (stored colours are unchanged)",
+      "Category trays: chip labels now stay in high-contrast neutral ink with the category colour shown by the leading dot",
+      "Consistent warm tones: explicit warm error and container colours in the theme, onSurface instead of pure black for unset section colours, and removal of leftover high-saturation tokens",
+      "Text truncation & spacing: ellipsis overflow and compact padding fallback in segmented controls, ellipsis on task descriptions, expanded sections, and category titles, secondary label styling for the section toggle, and disabled Android extra font padding on card titles",
+      "Archive toast: raised above the floating add button and card tap keys on narrow screens",
+      "Unified concentric geometry and tactile cards: 28 dp concentric toolbar corners, 12 dp / 16 dp card radii, consistent popup list corners, pure circular/capsule controls, raised warm-umber paper elevation on active wall cards (HIGH lifted further) and recessed top inner shadow on sunken cards",
+      "Settings & top bars: lighter regular-weight subtitles on top bars, cleaner day-threshold inputs without \"days\" suffixes, and a grouped clickable font list under Look and Feel"
+    ]
+  },
+  {
     "version": "1.1.0",
     "changes": [
       "New Overview tab between Task and Setting, with three views: the task wall, Later and Done",

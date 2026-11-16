@@ -27,8 +27,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme.shapes
 import androidx.compose.material3.SegmentedListItem
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -42,6 +42,7 @@ import androidx.compose.ui.unit.dp
 import com.shub39.grit.shared.ui.components.GritBottomSheet
 import com.shub39.grit.shared.ui.components.listItemColors
 import com.shub39.grit.shared.ui.components.segmentedListItemShapes
+import com.shub39.grit.shared.ui.theme.GritRadius
 import grit.shared.ui.generated.resources.*
 import java.util.Locale
 import kotlinx.coroutines.launch
@@ -97,7 +98,7 @@ actual fun LocalePickerSheet(onDismissRequest: () -> Unit, modifier: Modifier) {
             LazyColumn(
                 verticalArrangement = Arrangement.spacedBy(2.dp),
                 contentPadding = PaddingValues(bottom = 60.dp),
-                modifier = Modifier.heightIn(max = 600.dp).clip(shapes.large),
+                modifier = Modifier.heightIn(max = 600.dp).clip(RoundedCornerShape(GritRadius.md)),
             ) {
                 item {
                     SegmentedListItem(

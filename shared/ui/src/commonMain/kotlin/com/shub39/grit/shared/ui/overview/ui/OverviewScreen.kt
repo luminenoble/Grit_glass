@@ -45,7 +45,6 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.LargeFlexibleTopAppBar
-import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -75,6 +74,7 @@ import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -110,12 +110,10 @@ import com.shub39.grit.shared.ui.theme.GlassTier
 import com.shub39.grit.shared.ui.theme.GlassTokens
 import com.shub39.grit.shared.ui.theme.LocalFloatingBarInset
 import com.shub39.grit.shared.ui.theme.flexFontEmphasis
-import com.shub39.grit.shared.ui.theme.flexFontRounded
 import com.shub39.grit.shared.ui.theme.glassSource
 import com.shub39.grit.shared.ui.theme.glassSurface
 import com.shub39.grit.shared.ui.theme.rememberGlassBackdrop
 import com.shub39.grit.shared.ui.theme.titleBrush
-import com.shub39.grit.shared.ui.theme.withTitleColor
 import grit.shared.ui.generated.resources.Res
 import grit.shared.ui.generated.resources.overview_tab
 import kotlinx.datetime.DateTimeUnit
@@ -398,7 +396,13 @@ private fun OverviewTopBar(
             title = {
                 Text(stringResource(Res.string.overview_tab), fontFamily = flexFontEmphasis())
             },
-            subtitle = { Text(summary, fontFamily = flexFontRounded()) },
+            subtitle = {
+                Text(
+                    summary,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = GlassTokens.SecondaryText,
+                )
+            },
             actions = {
                 GlassSegmented(
                     options = OverviewView.entries,
@@ -433,7 +437,7 @@ private fun CategoryFilter(categories: List<Category>, selected: Long?, onSelect
     ) {
         item(key = "all") {
             CategoryToggleButton(checked = selected == null, onCheckedChange = { onSelect(null) }) {
-                Text("All")
+                Text("All", maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
         }
         items(categories, key = { it.id }) { category ->
@@ -451,7 +455,8 @@ private fun CategoryFilter(categories: List<Category>, selected: Long?, onSelect
                 }
                 Text(
                     category.name,
-                    style = LocalTextStyle.current.withTitleColor(category.titleColor),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                 )
             }
         }

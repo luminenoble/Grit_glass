@@ -38,12 +38,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -61,7 +63,10 @@ import com.shub39.grit.core.tasks.Priority
 import com.shub39.grit.core.tasks.Task
 import com.shub39.grit.core.tasks.WallTier
 import com.shub39.grit.shared.ui.theme.GlassTokens
+import com.shub39.grit.shared.ui.theme.GritRadius
 import com.shub39.grit.shared.ui.theme.parseTitleColors
+import com.shub39.grit.shared.ui.theme.readableTitleColors
+import com.shub39.grit.shared.ui.theme.withoutFontPadding
 import grit.shared.ui.generated.resources.Res
 import grit.shared.ui.generated.resources.light_mode
 import org.jetbrains.compose.resources.vectorResource
@@ -125,14 +130,14 @@ private fun titleSize(tier: WallTier, size: WallTextSize): Float =
     }
 
 /**
- * A task as a paper card on the wall. Its size is the [tier]; its category is the border colour;
- * its priority is how far the title and border (and, if chosen, a wash of the category colour)
- * fade into the paper. Colours are shown as stored, with no contrast correction.
+ * A task as a tactile paper card on the wall. Its size is the [tier]; its category is the border
+ * colour; its priority determines border weight/fade, optional paper wash, and elevation. Task
+ * title colours remain high-contrast against the paper (never faded into the background).
  *
  * [meta] is the small neutral note about time, and [corner] a second one (the date) that two-row
  * cards have room for beside their Section count. [overdue] adds a thin mark on the left; [sunk]
- * settles the card into the deeper beige of finished things. [footer] takes the corner's place,
- * for the choices on an overdue card. Taps report the card's coordinates so a
+ * recesses the card into the deeper beige of finished things with no outer shadow. [footer] takes
+ * the corner's place, for the choices on an overdue card. Taps report the card's coordinates so a
  * preview can open from where the card is.
  */
 @Composable
@@ -153,34 +158,37 @@ fun WallTile(
     val ink = MaterialTheme.colorScheme.onSurface
     val paper = if (sunk) GlassTokens.Settled else MaterialTheme.colorScheme.surface
     val fade = task.priority.fade
+    val high = task.priority == Priority.HIGH
     val categoryStops =
         remember(category?.titleColor) { parseTitleColors(category?.titleColor) } ?: listOf(ink)
-    val titleStops = remember(task.titleColor) { parseTitleColors(task.titleColor) } ?: listOf(ink)
+    val titleStops =
+        remember(task.titleColor) { readableTitleColors(task.titleColor) } ?: listOf(ink)
     val border = brushOf(categoryStops.map { lerp(it, paper, fade) })
     val fill =
         if (settings.importance == ImportanceDisplay.WITH_BACKGROUND)
             brushOf(categoryStops.map { lerp(paper, it, task.priority.wash) })
         else SolidColor(paper)
-    val shape = RoundedCornerShape(if (tier.rows == 1) 14.dp else 20.dp)
+    val cornerRadius = if (tier.rows == 1) GritRadius.md else GritRadius.lg
+    val shape = RoundedCornerShape(cornerRadius)
 
     val textSize = titleSize(tier, settings.textSize)
-    val fadedTitle = titleStops.map { lerp(it, paper, fade) }
     val titleStyle =
         MaterialTheme.typography.titleSmall
+            .withoutFontPadding()
             .copy(
                 fontSize = textSize.sp,
                 lineHeight = (textSize * 1.3f).sp,
                 letterSpacing = 0.sp,
                 fontWeight =
                     when {
-                        task.priority == Priority.HIGH -> FontWeight.Bold
+                        high -> FontWeight.Bold
                         tier == WallTier.XL -> FontWeight.SemiBold
                         else -> FontWeight.Medium
                     },
             )
             .let {
-                if (fadedTitle.size == 1) it.copy(color = fadedTitle[0])
-                else it.copy(brush = Brush.horizontalGradient(fadedTitle))
+                if (titleStops.size == 1) it.copy(color = titleStops[0])
+                else it.copy(brush = Brush.horizontalGradient(titleStops))
             }
     // Cells do not grow with the text, so the title gets as many lines as its card has room for.
     val line = with(LocalDensity.current) { (textSize * 1.3f).sp.toDp() }
@@ -199,13 +207,100 @@ fun WallTile(
 
     val position = remember { arrayOfNulls<LayoutCoordinates>(1) }
     val markInset = if (overdue) 8.dp else 0.dp
+    val borderWidth = task.priority.borderWidth
+    val elevatedModifier =
+        if (sunk) Modifier
+        else
+            Modifier.shadow(
+                elevation = if (high) 6.dp else 2.dp,
+                shape = shape,
+                clip = false,
+                ambientColor = GlassTokens.Shadow.copy(alpha = if (high) 0.36f else 0.18f),
+                spotColor = GlassTokens.Shadow.copy(alpha = if (high) 0.56f else 0.30f),
+            )
     Box(
         modifier
             .onGloballyPositioned { position[0] = it }
+            .then(elevatedModifier)
             .background(fill, shape)
-            .border(task.priority.borderWidth, border, shape)
+            .border(borderWidth, border, shape)
             .clip(shape)
             .drawBehind {
+                val borderPx = borderWidth.toPx()
+                val cornerPx = cornerRadius.toPx()
+                if (sunk) {
+                    // Recessed paper: inner top shadow band + dark inner lip, no outer shadow.
+                    drawRect(
+                        Brush.verticalGradient(
+                            0f to GlassTokens.Shadow.copy(alpha = 0.16f),
+                            1f to Color.Transparent,
+                            startY = borderPx,
+                            endY = borderPx + 10.dp.toPx(),
+                        )
+                    )
+                    val rimW = 1.dp.toPx()
+                    val rimInset = borderPx + rimW / 2f
+                    val rimRadius = (cornerPx - rimInset).coerceAtLeast(0f)
+                    drawRoundRect(
+                        Brush.verticalGradient(
+                            0f to GlassTokens.Shadow.copy(alpha = 0.22f),
+                            0.35f to Color.Transparent,
+                        ),
+                        topLeft = Offset(rimInset, rimInset),
+                        size = Size(size.width - rimInset * 2f, size.height - rimInset * 2f),
+                        cornerRadius = CornerRadius(rimRadius),
+                        style = Stroke(rimW),
+                    )
+                    drawRoundRect(
+                        Brush.verticalGradient(
+                            0.75f to Color.Transparent,
+                            1f to Color.White.copy(alpha = 0.32f),
+                        ),
+                        topLeft = Offset(rimInset, rimInset),
+                        size = Size(size.width - rimInset * 2f, size.height - rimInset * 2f),
+                        cornerRadius = CornerRadius(rimRadius),
+                        style = Stroke(0.5.dp.toPx()),
+                    )
+                } else {
+                    // Tactile elevation: top-left lit bevel + subtle dark bottom closing edge.
+                    val highlightW = (if (high) 1.dp else 0.75.dp).toPx()
+                    val highlightInset = borderPx + highlightW / 2f
+                    val highlightRadius = (cornerPx - highlightInset).coerceAtLeast(0f)
+                    drawRoundRect(
+                        Brush.linearGradient(
+                            0f to Color.White.copy(alpha = if (high) 0.85f else 0.58f),
+                            0.45f to Color.White.copy(alpha = if (high) 0.26f else 0.14f),
+                            0.75f to Color.Transparent,
+                            start = Offset.Zero,
+                            end = Offset(size.width, size.height),
+                        ),
+                        topLeft = Offset(highlightInset, highlightInset),
+                        size =
+                            Size(
+                                size.width - highlightInset * 2f,
+                                size.height - highlightInset * 2f,
+                            ),
+                        cornerRadius = CornerRadius(highlightRadius),
+                        style = Stroke(highlightW),
+                    )
+                    val bottomW = (if (high) 0.75.dp else 0.5.dp).toPx()
+                    val bottomInset = borderPx + bottomW / 2f
+                    val bottomRadius = (cornerPx - bottomInset).coerceAtLeast(0f)
+                    drawRoundRect(
+                        Brush.verticalGradient(
+                            0.65f to Color.Transparent,
+                            1f to GlassTokens.Shadow.copy(alpha = if (high) 0.14f else 0.08f),
+                        ),
+                        topLeft = Offset(bottomInset, bottomInset),
+                        size =
+                            Size(
+                                size.width - bottomInset * 2f,
+                                size.height - bottomInset * 2f,
+                            ),
+                        cornerRadius = CornerRadius(bottomRadius),
+                        style = Stroke(bottomW),
+                    )
+                }
                 if (overdue) {
                     val inset = 12.dp.toPx()
                     drawRoundRect(

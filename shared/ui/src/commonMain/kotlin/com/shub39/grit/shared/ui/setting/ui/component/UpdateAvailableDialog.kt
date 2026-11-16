@@ -27,14 +27,12 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.ButtonShapes
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -61,7 +59,7 @@ fun UpdateAvailableDialog(
                     Modifier.size(48.dp)
                         .background(
                             color = MaterialTheme.colorScheme.primaryContainer,
-                            shape = MaterialShapes.Pill.toShape(),
+                            shape = CircleShape,
                         ),
             ) {
                 Icon(
@@ -95,25 +93,11 @@ fun UpdateAvailableDialog(
             }
 
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                TextButton(
-                    onClick = onDismissRequest,
-                    shapes =
-                        ButtonShapes(
-                            shape = MaterialTheme.shapes.extraLarge,
-                            pressedShape = MaterialTheme.shapes.small,
-                        ),
-                ) {
+                TextButton(onClick = onDismissRequest) {
                     Text(text = "Later")
                 }
 
-                TextButton(
-                    onClick = onDownload,
-                    shapes =
-                        ButtonShapes(
-                            shape = MaterialTheme.shapes.extraLarge,
-                            pressedShape = MaterialTheme.shapes.small,
-                        ),
-                ) {
+                TextButton(onClick = onDownload) {
                     Text(text = "Download")
                 }
             }

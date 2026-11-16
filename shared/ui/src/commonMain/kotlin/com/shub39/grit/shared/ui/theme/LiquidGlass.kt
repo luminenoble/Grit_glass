@@ -170,9 +170,13 @@ val LocalFloatingBarInset = compositionLocalOf { 0.dp }
 
 object GlassShapes {
     val Capsule = RoundedCornerShape(percent = 50)
-    val Toolbar = RoundedCornerShape(22.dp)
-    val Panel = RoundedCornerShape(28.dp)
-    val Card = RoundedCornerShape(16.dp)
+    /** 22 dp inner circular controls + 6 dp toolbar inset = 28 dp concentric outer corner. */
+    val Toolbar = RoundedCornerShape(GritRadius.xxl)
+    val Panel = RoundedCornerShape(GritRadius.xxl)
+    /** Two-row or standard content card. */
+    val Card = RoundedCornerShape(GritRadius.lg)
+    /** Single-row or compact content card. */
+    val CardCompact = RoundedCornerShape(GritRadius.md)
 }
 
 /**

@@ -47,6 +47,10 @@ val GritBaseColors =
         surfaceContainerHighest = Color(0xFFDED7CB),
         outline = Color(0xFF928B80),
         outlineVariant = Color(0xFFC9C1B4),
+        error = Color(0xFF9A3B30),
+        onError = Color(0xFFFFFBF4),
+        errorContainer = Color(0xFFF3DDD8),
+        onErrorContainer = Color(0xFF4F1B15),
     )
 
 @Composable

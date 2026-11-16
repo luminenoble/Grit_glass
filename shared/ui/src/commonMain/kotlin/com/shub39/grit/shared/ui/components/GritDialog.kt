@@ -31,6 +31,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
+import com.shub39.grit.shared.ui.theme.GlassShapes
 import com.shub39.grit.shared.ui.theme.GlassTier
 import com.shub39.grit.shared.ui.theme.glassSurface
 
@@ -50,13 +51,13 @@ fun GritDialog(
         properties = properties,
     ) {
         Card(
-            shape = MaterialTheme.shapes.extraLarge,
+            shape = GlassShapes.Panel,
             colors =
                 CardDefaults.cardColors(
                     containerColor = Color.Transparent,
                     contentColor = MaterialTheme.colorScheme.onSurface,
                 ),
-            modifier = Modifier.glassSurface(tier, MaterialTheme.shapes.extraLarge),
+            modifier = Modifier.glassSurface(tier, GlassShapes.Panel),
         ) {
             Column(
                 modifier = Modifier.padding(padding),

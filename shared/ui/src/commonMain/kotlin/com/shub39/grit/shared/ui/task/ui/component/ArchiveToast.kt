@@ -23,9 +23,11 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
@@ -34,18 +36,20 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.shub39.grit.shared.ui.LocalWindowSizeClass
 import com.shub39.grit.shared.ui.components.glass.GlassToast
 import com.shub39.grit.shared.ui.task.TaskAction
 import com.shub39.grit.shared.ui.task.TaskState
 import com.shub39.grit.shared.ui.theme.GlassBackdrop
+import com.shub39.grit.shared.ui.theme.GlassMetrics
 import com.shub39.grit.shared.ui.theme.GlassShapes
 import com.shub39.grit.shared.ui.theme.LocalFloatingBarInset
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.delay
 
 /**
- * "Archived · Undo": shown for a few seconds above the navigation pill after a task is completed and
- * leaves the lists for the archive.
+ * "Archived · Undo": shown for a few seconds above the floating FAB / tap keys after a task is
+ * completed and leaves the lists for the archive.
  */
 @Composable
 fun BoxScope.ArchiveToast(
@@ -54,6 +58,7 @@ fun BoxScope.ArchiveToast(
     backdrop: GlassBackdrop? = null,
 ) {
     val archived = state.archived
+    val wide = LocalWindowSizeClass.current.widthSizeClass == WindowWidthSizeClass.Expanded
     LaunchedEffect(archived) {
         if (archived != null) {
             delay(5.seconds)
@@ -67,8 +72,9 @@ fun BoxScope.ArchiveToast(
                 .padding(
                     start = 16.dp,
                     end = 16.dp,
-                    bottom = LocalFloatingBarInset.current + 12.dp,
-                ),
+                    bottom = LocalFloatingBarInset.current + GlassMetrics.Primary + 24.dp,
+                )
+                .then(if (wide) Modifier.navigationBarsPadding() else Modifier),
         enter = fadeIn() + slideInVertically { it / 2 },
         exit = fadeOut(),
     ) {

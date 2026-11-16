@@ -42,6 +42,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.shub39.grit.shared.ui.theme.GlassTier
+import com.shub39.grit.shared.ui.theme.GritRadius
 import com.shub39.grit.shared.ui.theme.glassSurface
 
 @Composable
@@ -52,7 +53,7 @@ fun GritBottomSheet(
     padding: Dp = 32.dp,
     content: @Composable (ColumnScope.() -> Unit),
 ) {
-    val sheetShape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
+    val sheetShape = RoundedCornerShape(topStart = GritRadius.xxl, topEnd = GritRadius.xxl)
 
     // The sheet surface stays transparent and undecorated: ModalBottomSheet applies its
     // drag offset INSIDE the `modifier` param, so anything drawn there detaches from the

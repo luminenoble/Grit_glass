@@ -79,6 +79,7 @@ import com.shub39.grit.shared.ui.components.glass.GlassButton
 import com.shub39.grit.shared.ui.components.glass.GlassButtonStyle
 import com.shub39.grit.shared.ui.task.ui.component.DraftBackHandler
 import com.shub39.grit.shared.ui.theme.GlassBackdrop
+import com.shub39.grit.shared.ui.theme.GlassShapes
 import com.shub39.grit.shared.ui.theme.GlassTier
 import com.shub39.grit.shared.ui.theme.GlassTokens
 import com.shub39.grit.shared.ui.theme.glassBlurActive
@@ -99,7 +100,7 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.plus
 import org.jetbrains.compose.resources.vectorResource
 
-private val LensShape = RoundedCornerShape(26.dp)
+private val LensShape = GlassShapes.Panel
 
 /**
  * The preview of a task: a pane of glass that swells out of the card at [anchor] and lies over the

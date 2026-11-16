@@ -30,13 +30,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.material3.Button
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
-import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -69,7 +67,7 @@ fun ChangelogSheet(
                     Modifier.size(48.dp)
                         .background(
                             color = MaterialTheme.colorScheme.primaryContainer,
-                            shape = MaterialShapes.Pill.toShape(),
+                            shape = CircleShape,
                         ),
             ) {
                 Icon(

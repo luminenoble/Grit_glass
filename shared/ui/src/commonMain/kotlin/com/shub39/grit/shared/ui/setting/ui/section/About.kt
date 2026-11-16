@@ -34,18 +34,15 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Card
-import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.ListItem
-import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MediumFlexibleTopAppBar
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -246,7 +243,7 @@ private fun LazyListScope.aboutApp(versionName: String, uriHandler: UriHandler) 
                             Modifier.size(64.dp)
                                 .background(
                                     color = MaterialTheme.colorScheme.primaryContainer,
-                                    shape = MaterialShapes.Cookie12Sided.toShape(),
+                                    shape = CircleShape,
                                 ),
                         contentAlignment = Alignment.Center,
                     ) {
@@ -296,7 +293,7 @@ private fun LazyListScope.aboutApp(versionName: String, uriHandler: UriHandler) 
                                 Modifier.size(64.dp)
                                     .background(
                                         color = MaterialTheme.colorScheme.tertiaryContainer,
-                                        shape = MaterialShapes.Square.toShape(),
+                                        shape = CircleShape,
                                     ),
                             contentAlignment = Alignment.Center,
                         ) {

@@ -23,7 +23,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import com.shub39.grit.core.tasks.Section
@@ -63,11 +62,11 @@ fun SectionEditor(
                 singleLine = true,
                 enabled = !saving,
             )
-            // Each Section has its own colour (solid or gradient); unset is black.
+            // Each Section has its own colour (solid or gradient); unset uses onSurface.
             TitleColorRow(
                 label = "Text color",
                 value = titleColor,
-                default = Color.Black,
+                default = MaterialTheme.colorScheme.onSurface,
                 onChange = { titleColor = it },
                 enabled = !saving,
             )

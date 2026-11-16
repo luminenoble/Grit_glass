@@ -49,20 +49,15 @@ import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.ButtonShapes
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LargeFlexibleTopAppBar
-import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
-import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
-import androidx.compose.material3.toShape
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -84,10 +79,7 @@ import com.shub39.grit.shared.ui.LocalWindowSizeClass
 import com.shub39.grit.shared.ui.components.Empty
 import com.shub39.grit.shared.ui.components.GritDialog
 import com.shub39.grit.shared.ui.components.PageFill
-import com.shub39.grit.shared.ui.components.detachedItemShape
-import com.shub39.grit.shared.ui.components.endItemShape
-import com.shub39.grit.shared.ui.components.leadingItemShape
-import com.shub39.grit.shared.ui.components.middleItemShape
+import com.shub39.grit.shared.ui.components.groupedItemShape
 import com.shub39.grit.shared.ui.task.TaskAction
 import com.shub39.grit.shared.ui.task.TaskState
 import com.shub39.grit.shared.ui.task.ui.component.CategoryToggleButton
@@ -99,14 +91,13 @@ import com.shub39.grit.shared.ui.theme.GlassMetrics
 import com.shub39.grit.shared.ui.theme.LocalFloatingBarInset
 import com.shub39.grit.shared.ui.theme.GlassShapes
 import com.shub39.grit.shared.ui.theme.GlassTier
+import com.shub39.grit.shared.ui.theme.GlassTokens
 import com.shub39.grit.shared.ui.theme.GritRadius
 import com.shub39.grit.shared.ui.theme.glassSource
 import com.shub39.grit.shared.ui.theme.glassSurface
 import com.shub39.grit.shared.ui.theme.rememberGlassBackdrop
 import com.shub39.grit.shared.ui.theme.flexFontEmphasis
-import com.shub39.grit.shared.ui.theme.flexFontRounded
 import com.shub39.grit.shared.ui.theme.titleBrush
-import com.shub39.grit.shared.ui.theme.withTitleColor
 import grit.shared.ui.generated.resources.*
 import grit.shared.ui.generated.resources.add
 import kotlin.invoke
@@ -250,7 +241,8 @@ private fun TaskListTopBar(
         subtitle = {
             Text(
                 text = "${state.completedTasks.size} " + stringResource(Res.string.items_completed),
-                fontFamily = flexFontRounded(),
+                style = MaterialTheme.typography.bodyMedium,
+                color = GlassTokens.SecondaryText,
             )
         },
         actions = {
@@ -327,7 +319,11 @@ private fun CategorySelector(
                         modifier = Modifier.size(18.dp),
                     )
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text(text = stringResource(Res.string.today))
+                    Text(
+                        text = stringResource(Res.string.today),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
                 }
             }
 
@@ -351,7 +347,8 @@ private fun CategorySelector(
 
                     Text(
                         text = category.name,
-                        style = LocalTextStyle.current.withTitleColor(category.titleColor),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
                     )
                 }
             }
@@ -454,26 +451,11 @@ private fun CompactTasksView(
                         ->
                         ReorderableItem(reorderableListState, key = task.id) {
                             val cardShape =
-                                when {
-                                    reorderableTasks.size == 1 -> RoundedCornerShape(GritRadius.xl)
-                                    index == 0 ->
-                                        RoundedCornerShape(
-                                            topStart = GritRadius.xl,
-                                            topEnd = GritRadius.xl,
-                                            bottomStart = GritRadius.join,
-                                            bottomEnd = GritRadius.join,
-                                        )
-
-                                    index == reorderableTasks.size - 1 ->
-                                        RoundedCornerShape(
-                                            topStart = GritRadius.join,
-                                            topEnd = GritRadius.join,
-                                            bottomStart = GritRadius.xl,
-                                            bottomEnd = GritRadius.xl,
-                                        )
-
-                                    else -> RoundedCornerShape(GritRadius.join)
-                                }
+                                groupedItemShape(
+                                    index = index,
+                                    count = reorderableTasks.size,
+                                    endRadius = GritRadius.xl,
+                                )
 
                             TaskCard(
                                 task = task,
@@ -594,6 +576,8 @@ private fun ExpandedTasksView(
                             Text(
                                 text = category.name,
                                 style = MaterialTheme.typography.headlineSmall,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
                                 modifier = Modifier.padding(end = 8.dp).weight(1f),
                             )
 
@@ -616,26 +600,11 @@ private fun ExpandedTasksView(
 
                     itemsIndexed(items = displayTasks, key = { _, it -> it.id }) { index, task ->
                         val cardShape =
-                            when {
-                                displayTasks.size == 1 -> RoundedCornerShape(GritRadius.xl)
-                                index == 0 ->
-                                    RoundedCornerShape(
-                                        topStart = GritRadius.xl,
-                                        topEnd = GritRadius.xl,
-                                        bottomStart = GritRadius.join,
-                                        bottomEnd = GritRadius.join,
-                                    )
-
-                                index == displayTasks.size - 1 ->
-                                    RoundedCornerShape(
-                                        topStart = GritRadius.join,
-                                        topEnd = GritRadius.join,
-                                        bottomStart = GritRadius.xl,
-                                        bottomEnd = GritRadius.xl,
-                                    )
-
-                                else -> RoundedCornerShape(GritRadius.join)
-                            }
+                            groupedItemShape(
+                                index = index,
+                                count = displayTasks.size,
+                                endRadius = GritRadius.xl,
+                            )
 
                         TaskCard(
                             task = task,
@@ -685,7 +654,7 @@ private fun ExpandedTasksView(
                         modifier =
                             Modifier.fillMaxWidth()
                                 .heightIn(max = 600.dp)
-                                .padding(top = 16.dp, start = 16.dp, end = 16.dp),
+                                .padding(16.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
                         Box(
@@ -694,7 +663,7 @@ private fun ExpandedTasksView(
                                 Modifier.size(48.dp)
                                     .background(
                                         color = MaterialTheme.colorScheme.primaryContainer,
-                                        shape = MaterialShapes.Pill.toShape(),
+                                        shape = CircleShape,
                                     ),
                         ) {
                             Icon(
@@ -715,23 +684,21 @@ private fun ExpandedTasksView(
                         LazyColumn(
                             modifier =
                                 Modifier.fillMaxWidth()
-                                    .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)),
+                                    .clip(RoundedCornerShape(GritRadius.md)),
                             state = listState,
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.spacedBy(2.dp),
-                            contentPadding = PaddingValues(bottom = 16.dp),
                         ) {
                             itemsIndexed(items = reorderableTasks, key = { _, it -> it.id }) {
                                 index,
                                 task ->
                                 ReorderableItem(reorderableListState, key = task.id) {
                                     val shape =
-                                        when {
-                                            reorderableTasks.size == 1 -> detachedItemShape()
-                                            index == 0 -> leadingItemShape()
-                                            index == reorderableTasks.size - 1 -> endItemShape()
-                                            else -> middleItemShape()
-                                        }
+                                        groupedItemShape(
+                                            index = index,
+                                            count = reorderableTasks.size,
+                                            endRadius = GritRadius.md,
+                                        )
 
                                     ListItem(
                                         modifier = Modifier.clip(shape),

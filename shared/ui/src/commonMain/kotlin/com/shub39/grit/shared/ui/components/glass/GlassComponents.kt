@@ -69,13 +69,16 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import kotlin.math.roundToInt
 import androidx.compose.ui.window.DialogProperties
 import com.shub39.grit.shared.ui.theme.GlassBackdrop
 import com.shub39.grit.shared.ui.theme.GlassShapes
@@ -372,31 +375,99 @@ fun <T> GlassSegmented(
                         tintAlpha = GlassTokens.RaisedAlpha,
                     )
             )
-        Row(Modifier.selectableGroup()) {
-            options.forEachIndexed { i, option ->
-                val chosen = i == index
-                val ink by
-                    animateColorAsState(
-                        if (chosen) MaterialTheme.colorScheme.onSurface else GlassTokens.SecondaryText
-                    )
-                Box(
-                    Modifier.onPlaced { bounds[i] = it.positionInParent().x to it.size.width.toFloat() }
-                        .height(36.dp)
-                        .selectable(
-                            selected = chosen,
-                            enabled = enabled,
-                            role = Role.RadioButton,
-                            onClick = { onSelect(option) },
+        // Normal horizontal padding is 14 dp (8 dp base + 6 dp extra each side); narrow widths fall
+        // back to 8 dp padding first and then water-fill truncate long labels with an ellipsis.
+        Layout(
+            modifier = Modifier.selectableGroup(),
+            content = {
+                options.forEachIndexed { i, option ->
+                    val chosen = i == index
+                    val ink by
+                        animateColorAsState(
+                            if (chosen) MaterialTheme.colorScheme.onSurface
+                            else GlassTokens.SecondaryText
                         )
-                        .padding(horizontal = 14.dp),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text(
-                        label(option),
-                        color = ink.copy(alpha = if (enabled) 1f else 0.38f),
-                        style = MaterialTheme.typography.labelLarge,
-                        maxLines = 1,
-                    )
+                    Box(
+                        Modifier.onPlaced {
+                                bounds[i] = it.positionInParent().x to it.size.width.toFloat()
+                            }
+                            .height(36.dp)
+                            .clip(GlassShapes.Capsule)
+                            .selectable(
+                                selected = chosen,
+                                enabled = enabled,
+                                role = Role.RadioButton,
+                                onClick = { onSelect(option) },
+                            )
+                            .padding(horizontal = 8.dp),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(
+                            label(option),
+                            color = ink.copy(alpha = if (enabled) 1f else 0.38f),
+                            style = MaterialTheme.typography.labelLarge,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
+                }
+            },
+        ) { measurables, constraints ->
+            val heightPx = 36.dp.roundToPx()
+            if (measurables.isEmpty()) return@Layout layout(0, heightPx) {}
+            val extraPadPx = 12.dp.roundToPx()
+            val compactWidths = measurables.map { it.maxIntrinsicWidth(heightPx) }
+            val idealWidths = compactWidths.map { it + extraPadPx }
+            val totalIdeal = idealWidths.sum()
+            val totalCompact = compactWidths.sum()
+            val widths =
+                when {
+                    !constraints.hasBoundedWidth || totalIdeal <= constraints.maxWidth -> idealWidths
+                    totalCompact <= constraints.maxWidth -> {
+                        val slack = (constraints.maxWidth - totalCompact) / measurables.size
+                        compactWidths.map { it + slack }
+                    }
+                    else -> {
+                        val remaining = IntArray(measurables.size) { compactWidths[it] }
+                        var budget = constraints.maxWidth
+                        val fixed = BooleanArray(measurables.size)
+                        var active = measurables.size
+                        while (active > 0) {
+                            val share = budget / active
+                            var shrunk = false
+                            for (i in remaining.indices) {
+                                if (!fixed[i] && remaining[i] <= share) {
+                                    fixed[i] = true
+                                    budget -= remaining[i]
+                                    active--
+                                    shrunk = true
+                                }
+                            }
+                            if (!shrunk) {
+                                val rem = budget % active
+                                var idx = 0
+                                for (i in remaining.indices) {
+                                    if (!fixed[i]) {
+                                        remaining[i] = share + if (idx < rem) 1 else 0
+                                        idx++
+                                    }
+                                }
+                                break
+                            }
+                        }
+                        remaining.toList()
+                    }
+                }
+            val placeables =
+                measurables.mapIndexed { i, m ->
+                    m.measure(Constraints.fixed(widths[i].coerceAtLeast(0), heightPx))
+                }
+            val totalWidth = placeables.sumOf { it.width }
+            layout(totalWidth, heightPx) {
+                var x = 0
+                placeables.forEach { p ->
+                    p.place(x, 0)
+                    x += p.width
                 }
             }
         }

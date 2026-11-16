@@ -21,7 +21,6 @@ import androidx.compose.material3.ListItemColors
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.ListItemShapes
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.MaterialTheme.shapes
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -29,17 +28,16 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import com.shub39.grit.shared.ui.theme.GlassShapes
 import com.shub39.grit.shared.ui.theme.GlassTier
 import com.shub39.grit.shared.ui.theme.GlassTokens
+import com.shub39.grit.shared.ui.theme.GritRadius
 import com.shub39.grit.shared.ui.theme.glassSurface
-import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.unit.dp
-
-private const val CONNECTED_CORNER_RADIUS = 4
-private const val END_CORNER_RADIUS = 16
 
 @Composable
 fun listItemColors(): ListItemColors {
@@ -96,52 +94,63 @@ fun GlassGroup(modifier: Modifier = Modifier, content: @Composable () -> Unit) {
 }
 
 fun leadingItemShape(
-    topRadius: Int = END_CORNER_RADIUS,
-    bottomRadius: Int = CONNECTED_CORNER_RADIUS,
+    topRadius: Dp = GritRadius.lg,
+    bottomRadius: Dp = GritRadius.join,
 ): Shape =
     RoundedCornerShape(
-        topStart = topRadius.dp,
-        topEnd = topRadius.dp,
-        bottomEnd = bottomRadius.dp,
-        bottomStart = bottomRadius.dp,
+        topStart = topRadius,
+        topEnd = topRadius,
+        bottomEnd = bottomRadius,
+        bottomStart = bottomRadius,
     )
 
-fun middleItemShape(radius: Int = CONNECTED_CORNER_RADIUS): Shape =
-    RoundedCornerShape(
-        topStart = radius.dp,
-        topEnd = radius.dp,
-        bottomStart = radius.dp,
-        bottomEnd = radius.dp,
-    )
+fun middleItemShape(radius: Dp = GritRadius.join): Shape = RoundedCornerShape(radius)
 
 fun endItemShape(
-    topRadius: Int = CONNECTED_CORNER_RADIUS,
-    bottomRadius: Int = END_CORNER_RADIUS,
+    topRadius: Dp = GritRadius.join,
+    bottomRadius: Dp = GritRadius.lg,
 ): Shape =
     RoundedCornerShape(
-        topStart = topRadius.dp,
-        topEnd = topRadius.dp,
-        bottomEnd = bottomRadius.dp,
-        bottomStart = bottomRadius.dp,
+        topStart = topRadius,
+        topEnd = topRadius,
+        bottomEnd = bottomRadius,
+        bottomStart = bottomRadius,
     )
 
-fun detachedItemShape(radius: Int = END_CORNER_RADIUS): Shape = RoundedCornerShape(radius.dp)
+fun detachedItemShape(radius: Dp = GritRadius.lg): Shape = RoundedCornerShape(radius)
+
+/** Concentric item shape inside a grouped list; pass [endRadius] = [GritRadius.md] inside 28 dp dialogs. */
+fun groupedItemShape(
+    index: Int,
+    count: Int,
+    endRadius: Dp = GritRadius.lg,
+    joinRadius: Dp = GritRadius.join,
+): Shape =
+    when {
+        count <= 1 -> detachedItemShape(endRadius)
+        index == 0 -> leadingItemShape(topRadius = endRadius, bottomRadius = joinRadius)
+        index == count - 1 -> endItemShape(topRadius = joinRadius, bottomRadius = endRadius)
+        else -> middleItemShape(joinRadius)
+    }
 
 @Composable
 fun segmentedListItemShapes(
     index: Int,
     count: Int,
     singleElement: Boolean = count == 1,
-): ListItemShapes =
-    ListItemDefaults.segmentedShapes(
+    endRadius: Dp = GritRadius.md,
+): ListItemShapes {
+    val base = RoundedCornerShape(if (singleElement) endRadius else GritRadius.join)
+    return ListItemDefaults.segmentedShapes(
         index,
         count,
         ListItemDefaults.shapes(
-            shape = if (singleElement) shapes.large else shapes.extraSmall,
-            selectedShape = shapes.extraLargeIncreased,
-            pressedShape = shapes.extraLargeIncreased,
-            focusedShape = shapes.large,
-            hoveredShape = shapes.extraLarge,
-            draggedShape = shapes.extraLargeIncreased,
+            shape = base,
+            selectedShape = base,
+            pressedShape = base,
+            focusedShape = base,
+            hoveredShape = base,
+            draggedShape = base,
         ),
     )
+}
