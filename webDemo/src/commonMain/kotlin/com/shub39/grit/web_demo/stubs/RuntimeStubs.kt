@@ -19,12 +19,17 @@ package com.shub39.grit.web_demo.stubs
 import com.shub39.grit.core.interfaces.*
 import com.shub39.grit.core.settings.*
 import com.shub39.grit.core.settings.backup.TaskBackup
+import com.shub39.grit.core.sync.HostState
+import com.shub39.grit.core.sync.LanPairing
+import com.shub39.grit.core.sync.LanSync
+import com.shub39.grit.core.sync.RollbackPoint
+import com.shub39.grit.core.sync.RollbackStore
+import com.shub39.grit.core.sync.SnapshotMeta
+import com.shub39.grit.core.sync.WallLayoutStore
 import com.shub39.grit.core.tasks.*
 import com.shub39.grit.core.theme.Fonts
 import kotlin.time.Clock
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import kotlinx.datetime.LocalDate
 import org.koin.core.annotation.Single
 
@@ -107,239 +112,54 @@ class SettingsDatastoreStub : SettingsDatastore {
     }
 }
 
-private data class DemoData(val categories: List<Category>, val tasks: List<Task>)
-
 @Single(binds = [TaskRepo::class])
-class TaskRepoStub : TaskRepo {
-    private val data =
-        MutableStateFlow(
-            DemoData(
-                listOf(Category(id = 1, name = "Work")),
-                listOf(Task(id = 1, categoryId = 1, title = "Welcome to Grit Glass")),
-            )
+class TaskRepoStub :
+    TaskRepo by SnapshotTaskRepo(
+        TaskBackup(
+            TaskBackup.FORMAT,
+            TaskBackup.VERSION,
+            Clock.System.now(),
+            listOf(Category(id = 1, name = "Work")),
+            listOf(Task(id = 1, categoryId = 1, title = "Welcome to Grit Glass")),
         )
-    private val mutex = Mutex()
-    private var nextCategory = 2L
-    private var nextTask = 2L
-    private var nextSection = 1L
+    )
 
-    private suspend fun <T> write(block: (DemoData) -> Pair<DemoData, T>): T =
-        mutex.withLock {
-            val (next, result) = block(data.value)
-            data.value = next
-            result
-        }
+/** The demo neither hosts nor joins LAN sync. */
+@Single(binds = [LanSync::class])
+class LanSyncStub : LanSync {
+    override val canHost = false
+    override val canConnect = false
+    override val deviceName = "Demo"
+    override val host: StateFlow<HostState> = MutableStateFlow(HostState.Stopped())
 
-    private fun normalize(ts: List<Task>) =
-        ts.groupBy { it.categoryId }
-            .values
-            .flatMap { group ->
-                group.sortedBy { it.orderIndex }.mapIndexed { i, t -> t.copy(orderIndex = i) }
-            }
+    override fun startHost() {}
 
-    override fun getCategoriesFlow() = data.map { it.categories.sortedBy { c -> c.orderIndex } }
+    override fun stopHost() {}
 
-    override fun getTasksFlow() =
-        data.map { d ->
-            d.categories
-                .sortedBy { it.orderIndex }
-                .associateWith { c ->
-                    d.tasks.filter { it.categoryId == c.id }.sortedBy { it.orderIndex }
-                }
-        }
+    override suspend fun fetchMeta(pairing: LanPairing): SnapshotMeta = error("Not in the demo")
 
-    override fun getCompletedTasksFlow() = data.map { it.tasks.filter { t -> t.isCompleted } }
+    override suspend fun pull(pairing: LanPairing): TaskBackup = error("Not in the demo")
 
-    override suspend fun getTasks() = data.value.tasks
+    override suspend fun push(pairing: LanPairing, backup: TaskBackup): SnapshotMeta =
+        error("Not in the demo")
+}
 
-    override suspend fun getCategories() = data.value.categories.sortedBy { it.orderIndex }
+@Single(binds = [RollbackStore::class])
+class RollbackStoreStub : RollbackStore {
+    override suspend fun save(backup: TaskBackup, reason: String) {}
 
-    override suspend fun getTaskById(id: Long) = data.value.tasks.firstOrNull { it.id == id }
+    override suspend fun list(): List<RollbackPoint> = emptyList()
 
-    override suspend fun upsertCategory(category: Category): Long = write { d ->
-        require(category.name.isNotBlank())
-        validateTitleColor(category.titleColor)
-        val old = d.categories.firstOrNull { it.id == category.id }
-        require(category.id == 0L || old != null)
-        val saved =
-            category.copy(
-                id = old?.id ?: nextCategory++,
-                orderIndex = old?.orderIndex ?: d.categories.size,
-                name = category.name.trim(),
-                createdAt = old?.createdAt ?: Clock.System.now(),
-                updatedAt = Clock.System.now(),
-            )
-        d.copy(categories = d.categories.filterNot { it.id == saved.id } + saved) to saved.id
-    }
+    override suspend fun load(id: String): TaskBackup = error("No restore points in the demo")
+}
 
-    override suspend fun upsertTask(task: Task): Long = write { d ->
-        require(d.categories.any { it.id == task.categoryId } && task.title.isNotBlank())
-        validateTitleColor(task.titleColor)
-        val old = d.tasks.firstOrNull { it.id == task.id }
-        require(task.id == 0L || old != null)
-        val id = old?.id ?: nextTask++
-        val known = old?.sections?.associateBy { it.id } ?: emptyMap()
-        val ids = task.sections.filter { it.id > 0 }.map { it.id }
-        require(ids.distinct().size == ids.size && ids.all { it in known })
-        val now = Clock.System.now()
-        val sections =
-            task.sections.mapIndexed { i, s ->
-                s.normalized()
-                    .copy(
-                        id = if (s.id == 0L) nextSection++ else s.id,
-                        taskId = id,
-                        orderIndex = i,
-                        updatedAt = now,
-                    )
-            }
-        val draft = task.copy(title = task.title.trim(), sections = task.sections.map { it.normalized() })
-        val saved =
-            draft.copy(
-                id = id,
-                orderIndex =
-                    if (old == null || old.categoryId != task.categoryId)
-                        d.tasks.count { it.categoryId == task.categoryId }
-                    else old.orderIndex,
-                createdAt = old?.createdAt ?: now,
-                updatedAt = now,
-                lastTouchedAt = if (touches(old, draft)) now else old!!.lastTouchedAt,
-                completedAt =
-                    when {
-                        !task.isCompleted -> null
-                        old?.isCompleted == true -> old.completedAt ?: now
-                        else -> now
-                    },
-                sections = sections,
-            )
-        d.copy(tasks = normalize(d.tasks.filterNot { it.id == id } + saved)) to id
-    }
+@Single(binds = [WallLayoutStore::class])
+class WallLayoutStoreStub : WallLayoutStore {
+    private var spots: Map<Long, CardSpot> = emptyMap()
 
-    override suspend fun deleteTask(task: Task) {
-        write { d -> d.copy(tasks = normalize(d.tasks.filterNot { it.id == task.id })) to Unit }
-    }
+    override suspend fun load() = spots
 
-    override suspend fun deleteTasks(ids: List<Long>) {
-        write { d -> d.copy(tasks = normalize(d.tasks.filterNot { it.id in ids })) to Unit }
-    }
-
-    override suspend fun deleteAllTasks() {
-        write { d -> d.copy(tasks = emptyList()) to Unit }
-    }
-
-    override suspend fun deleteCategory(category: Category) {
-        write { d ->
-            d.copy(
-                categories =
-                    d.categories
-                        .filterNot { it.id == category.id }
-                        .sortedBy { it.orderIndex }
-                        .mapIndexed { i, c -> c.copy(orderIndex = i) },
-                tasks = d.tasks.filterNot { it.categoryId == category.id },
-            ) to Unit
-        }
-    }
-
-    override suspend fun deleteAllCategories() {
-        write { DemoData(emptyList(), emptyList()) to Unit }
-    }
-
-    override suspend fun clearToday() {
-        write { d -> d.copy(tasks = d.tasks.map { it.copy(isToday = false) }) to Unit }
-    }
-
-    override suspend fun reorderTasks(categoryId: Long, ids: List<Long>) {
-        write { d ->
-            validateReorder(d.tasks.filter { it.categoryId == categoryId }.map { it.id }, ids)
-            d.copy(
-                tasks =
-                    d.tasks.map {
-                        if (it.categoryId == categoryId)
-                            it.copy(orderIndex = ids.indexOf(it.id), updatedAt = Clock.System.now())
-                        else it
-                    }
-            ) to Unit
-        }
-    }
-
-    override suspend fun reorderCategories(ids: List<Long>) {
-        write { d ->
-            validateReorder(d.categories.map { it.id }, ids)
-            d.copy(
-                categories =
-                    d.categories.map {
-                        it.copy(orderIndex = ids.indexOf(it.id), updatedAt = Clock.System.now())
-                    }
-            ) to Unit
-        }
-    }
-
-    override suspend fun upsertSection(section: Section): Long = write { d ->
-        val task = requireNotNull(d.tasks.firstOrNull { it.id == section.taskId })
-        val old = task.sections.firstOrNull { it.id == section.id }
-        require(section.id == 0L || old != null)
-        val saved =
-            section
-                .normalized()
-                .copy(
-                    id = old?.id ?: nextSection++,
-                    orderIndex = old?.orderIndex ?: task.sections.size,
-                    updatedAt = Clock.System.now(),
-                )
-        val updated =
-            task.copy(
-                sections =
-                    (task.sections.filterNot { it.id == saved.id } + saved).sortedBy {
-                        it.orderIndex
-                    },
-                updatedAt = Clock.System.now(),
-                lastTouchedAt = Clock.System.now(),
-            )
-        d.copy(tasks = d.tasks.map { if (it.id == task.id) updated else it }) to saved.id
-    }
-
-    override suspend fun deleteSection(id: Long) {
-        write { d ->
-            d.copy(
-                tasks =
-                    d.tasks.map { t ->
-                        if (t.sections.none { it.id == id }) t
-                        else
-                            t.copy(
-                                sections =
-                                    t.sections
-                                        .filterNot { it.id == id }
-                                        .mapIndexed { i, s -> s.copy(orderIndex = i) },
-                                updatedAt = Clock.System.now(),
-                                lastTouchedAt = Clock.System.now(),
-                            )
-                    }
-            ) to Unit
-        }
-    }
-
-    override suspend fun exportSnapshot(): TaskBackup =
-        mutex.withLock {
-            val d = data.value
-            TaskBackup(
-                TaskBackup.FORMAT,
-                TaskBackup.VERSION,
-                Clock.System.now(),
-                d.categories.sortedBy { it.orderIndex },
-                d.tasks,
-            )
-        }
-
-    override suspend fun replaceData(backup: TaskBackup) {
-        val valid = backup.validated()
-        write {
-            nextCategory = maxOf(nextCategory, (valid.categories.maxOfOrNull { it.id } ?: 0) + 1)
-            nextTask = maxOf(nextTask, (valid.tasks.maxOfOrNull { it.id } ?: 0) + 1)
-            nextSection =
-                maxOf(
-                    nextSection,
-                    (valid.tasks.flatMap { it.sections }.maxOfOrNull { it.id } ?: 0) + 1,
-                )
-            DemoData(valid.categories, valid.tasks) to Unit
-        }
+    override suspend fun save(spots: Map<Long, CardSpot>) {
+        this.spots = spots
     }
 }

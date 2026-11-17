@@ -21,6 +21,12 @@ import com.shub39.grit.shared.ui.components.glass.GlassButton
 import com.shub39.grit.shared.ui.components.glass.GlassIconButton
 import com.shub39.grit.shared.ui.components.glass.GlassAlertDialog
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import com.shub39.grit.shared.ui.components.detachedItemShape
+import com.shub39.grit.shared.ui.components.glassItem
+import com.shub39.grit.shared.ui.components.glassListItemColors
+import com.shub39.grit.shared.ui.hasPhoneFeatures
+import com.shub39.grit.shared.ui.supportsLanSync
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -68,6 +74,7 @@ fun BackupPage(
     state: SettingsState,
     onAction: (SettingsAction) -> Unit,
     onNavigateBack: () -> Unit,
+    onNavigateToLanSync: () -> Unit = {},
 ) {
     LaunchedEffect(Unit) { onAction(SettingsAction.OnResetBackupState) }
 
@@ -121,6 +128,27 @@ fun BackupPage(
                     bottom = LocalFloatingBarInset.current + 24.dp,
                 ),
         ) {
+            if (supportsLanSync)
+                item {
+                    ListItem(
+                        modifier = Modifier.glassItem(detachedItemShape()).clickable { onNavigateToLanSync() },
+                        colors = glassListItemColors(),
+                        leadingContent = {
+                            Icon(imageVector = vectorResource(Res.drawable.language), contentDescription = null)
+                        },
+                        headlineContent = { Text("LAN Sync") },
+                        supportingContent = {
+                            Text(
+                                if (hasPhoneFeatures)
+                                    "Push to or pull from the Grit Glass desktop app on the same Wi-Fi"
+                                else "Let the Grit Glass phone app on the same network push or pull"
+                            )
+                        },
+                        trailingContent = {
+                            Icon(imageVector = vectorResource(Res.drawable.arrow_forward), contentDescription = null)
+                        },
+                    )
+                }
             item {
                 Text("Imports JSON backups exported by Grit Glass and Grhinet. A backup holds categories, tasks and sections, not the settings of this device.", Modifier.padding(12.dp))
             }

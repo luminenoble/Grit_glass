@@ -16,7 +16,17 @@
  */
 package com.shub39.grit.di
 
+import android.content.Context
+import android.os.Build
+import android.provider.Settings
 import androidx.datastore.core.DataStore
+import com.shub39.grit.core.sync.LanSync
+import com.shub39.grit.core.sync.RollbackStore
+import com.shub39.grit.core.sync.WallLayoutStore
+import com.shub39.grit.sync.ClientLanSync
+import com.shub39.grit.sync.FileRollbackStore
+import com.shub39.grit.sync.FileWallLayoutStore
+import java.io.File
 import androidx.datastore.preferences.core.Preferences
 import com.shub39.grit.core.data.datastore.DatastoreFactory
 import com.shub39.grit.shared.ui.di.UIModules
@@ -43,4 +53,24 @@ class GritModules {
     @Single
     fun getDatastore(factory: DatastoreFactory): DataStore<Preferences> =
         factory.getPreferencesDataStore()
+
+    /** The phone connects to the desktop app; it never hosts. */
+    @Single
+    fun getLanSync(context: Context): LanSync =
+        ClientLanSync(
+            runCatching {
+                    Settings.Global.getString(context.contentResolver, Settings.Global.DEVICE_NAME)
+                }
+                .getOrNull()
+                ?.takeIf { it.isNotBlank() } ?: "${Build.MANUFACTURER} ${Build.MODEL}"
+        )
+
+    @Single
+    fun getRollbackStore(context: Context): RollbackStore =
+        FileRollbackStore(File(context.filesDir, "rollback"))
+
+    /** Where cards lie on the desk on a tablet; this device only. */
+    @Single
+    fun getWallLayoutStore(context: Context): WallLayoutStore =
+        FileWallLayoutStore(File(context.filesDir, "wall_layout.json"))
 }

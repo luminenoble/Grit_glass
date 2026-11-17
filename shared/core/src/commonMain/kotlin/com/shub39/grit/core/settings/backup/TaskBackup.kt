@@ -34,28 +34,33 @@ data class TaskBackup(
         require(
             categories.all { it.id > 0 } &&
                 categories.map { it.id }.distinct().size == categories.size
-        )
-        require(tasks.all { it.id > 0 } && tasks.map { it.id }.distinct().size == tasks.size)
+        ) { "Category IDs must be positive and unique" }
+        require(tasks.all { it.id > 0 } && tasks.map { it.id }.distinct().size == tasks.size) {
+            "Task IDs must be positive and unique"
+        }
         fun order(indices: List<Int>) =
             require(indices.sorted() == indices.indices.toList()) { "Order within a parent must be contiguous" }
         order(categories.map { it.orderIndex })
         categories.forEach {
-            require(it.name.isNotBlank())
+            require(it.name.isNotBlank()) { "A category has no name" }
             validateTitleColor(it.titleColor)
-            require(it.updatedAt >= it.createdAt)
+            require(it.updatedAt >= it.createdAt) { "Category “${it.name}” was changed before it was created" }
         }
         val categoryIds = categories.map { it.id }.toSet()
         tasks.forEach { task ->
-            require(task.categoryId in categoryIds && task.title.isNotBlank())
+            require(task.categoryId in categoryIds) { "Task “${task.title}” belongs to a missing category" }
+            require(task.title.isNotBlank()) { "A task has no title" }
             validateTitleColor(task.titleColor)
-            require(task.updatedAt >= task.createdAt)
+            require(task.updatedAt >= task.createdAt) { "Task “${task.title}” was changed before it was created" }
             require(task.isCompleted == (task.completedAt != null)) { "Completion time does not match the completed state" }
             order(task.sections.map { it.orderIndex })
         }
         tasks.groupBy { it.categoryId }.values.forEach { order(it.map { task -> task.orderIndex }) }
         val sections = tasks.flatMap { it.sections }
-        require(sections.all { it.id > 0 && it.updatedAt >= it.createdAt })
-        require(sections.map { it.id }.distinct().size == sections.size)
+        require(sections.all { it.id > 0 && it.updatedAt >= it.createdAt }) {
+            "Section IDs must be positive, and no Section changed before it was created"
+        }
+        require(sections.map { it.id }.distinct().size == sections.size) { "Section IDs must be unique" }
         return copy(
             tasks =
                 tasks.map { task ->

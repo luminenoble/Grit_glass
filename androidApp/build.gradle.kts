@@ -26,8 +26,8 @@ plugins {
 }
 
 val appName = "Grit Glass"
-val appVersionCode = 1111
-val appVersionName = "1.1.1.1"
+val appVersionCode = providers.gradleProperty("grit.versionCode").get().toInt()
+val appVersionName = providers.gradleProperty("grit.versionName").get()
 
 android {
     namespace = "com.shub39.grit"
@@ -138,6 +138,7 @@ kotlin {
 dependencies {
     implementation(projects.shared.core)
     implementation(projects.shared.ui)
+    implementation(projects.shared.sync)
 
     "playImplementation"(libs.purchases)
     "playImplementation"(libs.purchases.ui)
@@ -222,7 +223,7 @@ tasks.register("generateChangelog") {
                 append("    \"changes\": [\n")
 
                 entry.value.forEachIndexed { i, item ->
-                    append("      \"${item.replace("\"", "\\\"")}\"")
+                    append("      \"${item.replace("\\", "\\\\").replace("\"", "\\\"")}\"")
                     if (i != entry.value.lastIndex) append(",")
                     append("\n")
                 }

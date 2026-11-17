@@ -58,6 +58,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass.Companion.Compact
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -102,6 +103,17 @@ fun MainApp(state: MainAppState, onNavigateToPaywall: () -> Unit) {
     val navigate: (AppSections) -> Unit = { route ->
         appBackStack.removeAll { it == route }
         appBackStack.add(route)
+    }
+
+    // A shortcut or a link the app was opened with brings up the page that handles it.
+    val newTask by AppSignals.newTaskRequested.collectAsStateWithLifecycle()
+    val pairing by AppSignals.pairingRequested.collectAsStateWithLifecycle()
+    LaunchedEffect(newTask) {
+        if (newTask && appBackStack.lastOrNull() != AppSections.TaskPages) navigate(AppSections.TaskPages)
+    }
+    LaunchedEffect(pairing) {
+        if (pairing != null && appBackStack.lastOrNull() != AppSections.SettingsPages)
+            navigate(AppSections.SettingsPages)
     }
 
     when (windowSizeClass.widthSizeClass) {

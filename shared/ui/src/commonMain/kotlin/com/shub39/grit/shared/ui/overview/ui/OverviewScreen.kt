@@ -81,11 +81,10 @@ import androidx.compose.ui.unit.sp
 import com.shub39.grit.core.settings.WallSettings
 import com.shub39.grit.core.tasks.Category
 import com.shub39.grit.core.tasks.Task
-import com.shub39.grit.core.tasks.WallBand
-import com.shub39.grit.core.tasks.WallTier
-import com.shub39.grit.core.tasks.hasSunk
+import com.shub39.grit.core.tasks.Urgency
+import com.shub39.grit.core.tasks.dueOrder
 import com.shub39.grit.core.tasks.isOverdue
-import com.shub39.grit.core.tasks.layoutWall
+import com.shub39.grit.core.tasks.urgency
 import com.shub39.grit.shared.ui.LocalWindowSizeClass
 import com.shub39.grit.shared.ui.components.DayPickerDialog
 import com.shub39.grit.shared.ui.components.glass.GlassAlertDialog
@@ -94,13 +93,18 @@ import com.shub39.grit.shared.ui.components.glass.GlassButtonStyle
 import com.shub39.grit.shared.ui.components.glass.GlassSegmented
 import com.shub39.grit.shared.ui.overview.ui.component.CardTap
 import com.shub39.grit.shared.ui.overview.ui.component.CardTapKeys
+import com.shub39.grit.shared.ui.overview.ui.component.Desk
+import com.shub39.grit.shared.ui.overview.ui.component.DeskToolbar
+import com.shub39.grit.shared.ui.overview.ui.component.PaperChip
+import com.shub39.grit.shared.ui.overview.ui.component.PaperTones
 import com.shub39.grit.shared.ui.overview.ui.component.TaskLens
+import com.shub39.grit.shared.ui.overview.ui.component.TaskTile
 import com.shub39.grit.shared.ui.overview.ui.component.WallMetrics
-import com.shub39.grit.shared.ui.overview.ui.component.WallTile
 import com.shub39.grit.shared.ui.overview.ui.component.completedDay
+import com.shub39.grit.shared.ui.overview.ui.component.days
 import com.shub39.grit.shared.ui.overview.ui.component.deadlineLabel
-import com.shub39.grit.shared.ui.overview.ui.component.idleLabel
 import com.shub39.grit.shared.ui.overview.ui.component.label
+import com.shub39.grit.shared.ui.overview.ui.component.rememberDeskState
 import com.shub39.grit.shared.ui.task.TaskAction
 import com.shub39.grit.shared.ui.task.TaskState
 import com.shub39.grit.shared.ui.task.ui.component.CategoryToggleButton
@@ -121,9 +125,13 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.plus
 import org.jetbrains.compose.resources.stringResource
 
-/** The three places an unfinished or finished task can be, in the order it moves through them. */
+/**
+ * The places an unfinished or finished task can be, in the order it moves through them. A wide
+ * window shows the open tasks as a desk ([Wall]); a phone lists the dated ones by deadline ([Due]).
+ */
 private enum class OverviewView {
     Wall,
+    Due,
     Later,
     Done,
 }
@@ -157,7 +165,14 @@ fun OverviewScreen(
 
     val backdrop = rememberGlassBackdrop()
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
-    val wide = LocalWindowSizeClass.current.widthSizeClass == WindowWidthSizeClass.Expanded
+    val widthClass = LocalWindowSizeClass.current.widthSizeClass
+    val wide = widthClass == WindowWidthSizeClass.Expanded
+    // The free desk needs room and a pointer; a phone gets the deadline list instead.
+    val deskMode = widthClass != WindowWidthSizeClass.Compact
+    val views =
+        if (deskMode) listOf(OverviewView.Wall, OverviewView.Later, OverviewView.Done)
+        else listOf(OverviewView.Due, OverviewView.Later, OverviewView.Done)
+    val shownView = if (view in views) view else views.first()
     val barInset = LocalFloatingBarInset.current
     val today = state.today
 
@@ -165,8 +180,15 @@ fun OverviewScreen(
     val categoryOf = remember(categories) { categories.associateBy { it.id } }
     val filter = onlyCategory?.takeIf { it in categoryOf }
     fun List<Task>.shown() = if (filter == null) this else filter { it.categoryId == filter }
-    val wallTasks = remember(state.tasks, today, filter) { state.allTasks.shown() }
-    val wallCount = remember(wallTasks, today) { wallTasks.count { it.isActive(today) } }
+    val active = remember(state.tasks, today) { state.allTasks.filter { it.isActive(today) } }
+    val wallTasks = remember(active, filter) { active.shown() }
+    val due = remember(wallTasks, today) { dueOrder(wallTasks, today) }
+    // Spots are only pruned once the library has loaded, never against the empty first state.
+    val keep =
+        remember(state.tasks) {
+            state.allTasks.takeIf { it.isNotEmpty() }?.filter { !it.isCompleted }?.map { it.id }?.toSet()
+        }
+    val desk = if (deskMode) rememberDeskState() else null
     val someday = remember(state.tasks, filter) { state.somedayTasks.shown() }
     val suspended = remember(state.tasks, today, filter) { state.suspendedTasks.shown() }
     val done = remember(state.tasks, filter) { state.completedTasks.shown() }
@@ -194,11 +216,13 @@ fun OverviewScreen(
         ) {
             OverviewTopBar(
                 scrollBehavior = scrollBehavior,
-                view = view,
+                views = views,
+                view = shownView,
                 onView = { view = it },
                 summary =
-                    when (view) {
-                        OverviewView.Wall -> "$wallCount on the wall"
+                    when (shownView) {
+                        OverviewView.Wall -> "${wallTasks.size} on the desk"
+                        OverviewView.Due -> "${due.size} with a deadline"
                         OverviewView.Later ->
                             "${someday.size} later, ${suspended.size} suspended"
                         OverviewView.Done -> "${done.size} completed"
@@ -210,7 +234,7 @@ fun OverviewScreen(
 
             val motion = MaterialTheme.motionScheme
             AnimatedContent(
-                targetState = view,
+                targetState = shownView,
                 transitionSpec = {
                     fadeIn(motion.fastEffectsSpec()) togetherWith fadeOut(motion.fastEffectsSpec())
                 },
@@ -218,19 +242,56 @@ fun OverviewScreen(
             ) { shown ->
                 when (shown) {
                     OverviewView.Wall ->
-                        TaskWall(
-                            tasks = wallTasks,
-                            today = today,
+                        if (desk != null)
+                            Desk(
+                                state = desk,
+                                shown = wallTasks,
+                                active = active,
+                                keep = keep,
+                                categoryOf = categoryOf,
+                                today = today,
+                                settings = state.wall,
+                                onTap = onTap,
+                                onHold = onHold,
+                                onEdit = onOpenTask,
+                                overdueChoices = { task ->
+                                    PaperChip("New date") { dayRequest = DayRequest.Deadline(task) }
+                                    PaperChip("No date") { update(task.copy(deadline = null)) }
+                                    PaperChip("Give up", ink = GlassTokens.Danger) { abandoning = task }
+                                },
+                            )
+                    OverviewView.Due -> {
+                        val t = state.wall.thresholds
+                        fun within(level: Urgency) =
+                            due.filter { !it.isOverdue(today) && it.urgency(today, t) == level }
+                        TileList(
                             settings = state.wall,
                             categoryOf = categoryOf,
                             onTap = onTap,
                             onHold = onHold,
-                            overdueChoices = { task ->
-                                PaperChip("New date") { dayRequest = DayRequest.Deadline(task) }
-                                PaperChip("No date") { update(task.copy(deadline = null)) }
-                                PaperChip("Give up", ink = GlassTokens.Danger) { abandoning = task }
-                            },
+                            empty =
+                                "No deadlines. Tasks with a deadline are listed here, soonest first; on a wide screen every task lies on the desk.",
+                            groups =
+                                listOf(
+                                    TileGroup("Passed", due.filter { it.isOverdue(today) }, tinted = true) {
+                                        it.deadline?.label(today)
+                                    },
+                                    TileGroup("Within ${days(t.a)}", within(Urgency.DUE), tinted = true) {
+                                        it.deadlineLabel(today)
+                                    },
+                                    TileGroup("Within ${days(t.b)}", within(Urgency.SOON), tinted = true) {
+                                        it.deadlineLabel(today)
+                                    },
+                                    TileGroup("Within ${days(t.c)}", within(Urgency.UPCOMING), tinted = true) {
+                                        it.deadlineLabel(today)
+                                    },
+                                    TileGroup("Later dates", within(Urgency.AHEAD), tinted = true) {
+                                        it.deadline?.label(today)
+                                    },
+                                ),
+                            today = today,
                         )
+                    }
                     OverviewView.Later ->
                         TileList(
                             settings = state.wall,
@@ -246,6 +307,7 @@ fun OverviewScreen(
                                         it.hiddenUntil?.label(today)
                                     },
                                 ),
+                            today = today,
                         )
                     OverviewView.Done ->
                         TileList(
@@ -256,6 +318,7 @@ fun OverviewScreen(
                             empty = "No completed tasks yet. Tasks are archived here when you complete them.",
                             groups =
                                 listOf(TileGroup(null, done) { it.completedDay()?.label(today) }),
+                            today = today,
                             header =
                                 if (state.completedTasks.isEmpty()) null
                                 else {
@@ -273,6 +336,20 @@ fun OverviewScreen(
                 }
             }
         }
+
+        if (desk != null && shownView == OverviewView.Wall)
+            DeskToolbar(
+                state = desk,
+                active = active,
+                categoryOrder = categories.map { it.id },
+                today = today,
+                settings = state.wall,
+                backdrop = backdrop,
+                modifier =
+                    Modifier.align(Alignment.BottomStart)
+                        .padding(start = 16.dp, bottom = 16.dp + barInset)
+                        .then(if (wide) Modifier.navigationBarsPadding() else Modifier),
+            )
 
         CardTapKeys(
             selected = tap,
@@ -375,6 +452,7 @@ fun OverviewScreen(
 @Composable
 private fun OverviewTopBar(
     scrollBehavior: TopAppBarScrollBehavior,
+    views: List<OverviewView>,
     view: OverviewView,
     onView: (OverviewView) -> Unit,
     summary: String,
@@ -405,12 +483,13 @@ private fun OverviewTopBar(
             },
             actions = {
                 GlassSegmented(
-                    options = OverviewView.entries,
+                    options = views,
                     selected = view,
                     onSelect = onView,
                     label = {
                         when (it) {
                             OverviewView.Wall -> "Wall"
+                            OverviewView.Due -> "Due"
                             OverviewView.Later -> "Later"
                             OverviewView.Done -> "Done"
                         }
@@ -486,7 +565,7 @@ private fun listPadding(): PaddingValues =
         bottom = LocalFloatingBarInset.current + GlassMetrics.Primary + 24.dp,
     )
 
-/** Width of the grid and of one cell: 4 columns, or 8 cells of the phone's size on wide screens. */
+/** Width of the tile grid and of one cell: 4 columns, or 8 cells of the phone's size on wide screens. */
 private data class WallGrid(val columns: Int, val width: Dp, val cell: Dp)
 
 private fun wallGrid(available: Dp): WallGrid {
@@ -499,108 +578,19 @@ private fun wallGrid(available: Dp): WallGrid {
     }
 }
 
-/** The task wall: every open task as a card, biggest and most pressing first. */
-@Composable
-private fun TaskWall(
-    tasks: List<Task>,
-    today: LocalDate,
-    settings: WallSettings,
-    categoryOf: Map<Long, Category>,
-    onTap: (Task, LayoutCoordinates) -> Unit,
-    onHold: (Task, LayoutCoordinates) -> Unit,
-    overdueChoices: @Composable RowScope.(Task) -> Unit,
-) {
-    BoxWithConstraints(Modifier.fillMaxSize()) {
-        val grid = wallGrid(maxWidth)
-        val bands =
-            remember(tasks, today, settings.thresholds, grid.columns) {
-                layoutWall(tasks, today, settings.thresholds, grid.columns)
-            }
-        LazyColumn(
-            modifier = Modifier.fillMaxSize().fadingTop(),
-            contentPadding = listPadding(),
-            verticalArrangement = Arrangement.spacedBy(WallMetrics.Gap),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            if (bands.isEmpty()) item { EmptyNote("The wall is empty. Tasks you add on the Task page are laid out here by deadline and priority.") }
-            items(
-                bands,
-                key = {
-                    when (it) {
-                        is WallBand.Cards -> it.cards.first().task.id
-                        WallBand.NoDeadline -> "no-deadline"
-                    }
-                },
-                contentType = { it is WallBand.Cards },
-            ) { band ->
-                when (band) {
-                    WallBand.NoDeadline -> WallLabel("No deadline", Modifier.width(grid.width))
-                    is WallBand.Cards ->
-                        Box(
-                            Modifier.width(grid.width)
-                                .height(
-                                    WallMetrics.Row * band.rows +
-                                        WallMetrics.Gap * (band.rows - 1)
-                                )
-                        ) {
-                            band.cards.forEach { card ->
-                                key(card.task.id) {
-                                    val task = card.task
-                                    val overdue = task.isOverdue(today)
-                                    WallTile(
-                                        task = task,
-                                        category = categoryOf[task.categoryId],
-                                        tier = card.tier,
-                                        settings = settings,
-                                        onClick = { onTap(task, it) },
-                                        onLongClick = { onHold(task, it) },
-                                        modifier =
-                                            Modifier.offset(
-                                                    x = (grid.cell + WallMetrics.Gap) * card.column,
-                                                    y =
-                                                        (WallMetrics.Row + WallMetrics.Gap) *
-                                                            card.row,
-                                                )
-                                                .size(
-                                                    grid.cell * card.columns +
-                                                        WallMetrics.Gap * (card.columns - 1),
-                                                    WallMetrics.Row * card.rows +
-                                                        WallMetrics.Gap * (card.rows - 1),
-                                                ),
-                                        // Below the "No deadline" line a card counts the days since
-                                        // it was worked on; above it, the days it has left.
-                                        meta =
-                                            if (task.deadline != null) task.deadlineLabel(today)
-                                            else if (card.tier == WallTier.S) task.idleLabel(today)
-                                            else null,
-                                        corner =
-                                            task.deadline?.takeIf { !overdue }?.label(today),
-                                        overdue = overdue,
-                                        sunk = task.hasSunk(today),
-                                        footer =
-                                            if (overdue && card.columns >= 4) {
-                                                { overdueChoices(task) }
-                                            } else null,
-                                    )
-                                }
-                            }
-                        }
-                }
-            }
-        }
-    }
-}
-
+/** A titled run of tiles; [tinted] tiles take the paper of how near their deadline is. */
 private data class TileGroup(
     val title: String?,
     val tasks: List<Task>,
+    val tinted: Boolean = false,
     val meta: (Task) -> String?,
 )
 
-/** Shelved or archived tasks: equal cards, two cells wide, in the order of their [groups]. */
+/** Dated, shelved or archived tasks: equal tiles, two cells wide, in the order of their [groups]. */
 @Composable
 private fun TileList(
     groups: List<TileGroup>,
+    today: LocalDate,
     settings: WallSettings,
     categoryOf: Map<Long, Category>,
     onTap: (Task, LayoutCoordinates) -> Unit,
@@ -631,7 +621,7 @@ private fun TileList(
                         item(key = "label-${group.title}") {
                             WallLabel(group.title, Modifier.width(grid.width))
                         }
-                    tileRows(group, perRow, grid, settings, categoryOf, onTap, onHold)
+                    tileRows(group, perRow, grid, today, settings, categoryOf, onTap, onHold)
                 }
         }
     }
@@ -641,6 +631,7 @@ private fun LazyListScope.tileRows(
     group: TileGroup,
     perRow: Int,
     grid: WallGrid,
+    today: LocalDate,
     settings: WallSettings,
     categoryOf: Map<Long, Category>,
     onTap: (Task, LayoutCoordinates) -> Unit,
@@ -653,16 +644,19 @@ private fun LazyListScope.tileRows(
         ) {
             row.forEach { task ->
                 key(task.id) {
-                    WallTile(
+                    TaskTile(
                         task = task,
                         category = categoryOf[task.categoryId],
-                        tier = WallTier.M,
                         settings = settings,
                         onClick = { onTap(task, it) },
                         onLongClick = { onHold(task, it) },
                         modifier =
                             Modifier.size(grid.cell * 2 + WallMetrics.Gap, WallMetrics.Row),
                         meta = group.meta(task),
+                        paper =
+                            if (group.tinted) PaperTones.of(task.urgency(today, settings.thresholds))
+                            else null,
+                        overdue = group.tinted && task.isOverdue(today),
                     )
                 }
             }
@@ -687,27 +681,6 @@ private fun WallLabel(text: String, modifier: Modifier = Modifier) {
             Modifier.weight(1f)
                 .height(1.dp)
                 .background(GlassTokens.Shadow.copy(alpha = 0.16f))
-        )
-    }
-}
-
-/** A small choice set into a paper card: outlined, not glass, since it is part of the content. */
-@Composable
-private fun PaperChip(text: String, ink: Color = GlassTokens.SecondaryText, onClick: () -> Unit) {
-    Box(
-        Modifier.padding(end = 6.dp)
-            .height(30.dp)
-            .clip(GlassShapes.Capsule)
-            .background(GlassTokens.Shadow.copy(alpha = 0.07f))
-            .clickable(role = Role.Button, onClick = onClick)
-            .padding(horizontal = 10.dp),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(
-            text,
-            style = MaterialTheme.typography.labelMedium.copy(letterSpacing = 0.sp),
-            color = ink,
-            maxLines = 1,
         )
     }
 }

@@ -17,5 +17,41 @@
 package com.shub39.grit.shared.ui.task.ui.component
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.rememberUpdatedState
 
-@Composable actual fun DraftBackHandler(enabled: Boolean, onBack: () -> Unit) {}
+/**
+ * Esc on the desktop: the window hands the key to [DesktopBack.dispatch], which goes to the most
+ * recently shown handler that is enabled, the way the system back gesture does on Android.
+ */
+object DesktopBack {
+    internal class Entry(var enabled: Boolean, var onBack: () -> Unit)
+
+    private val entries = ArrayList<Entry>()
+
+    internal fun add(entry: Entry) {
+        entries += entry
+    }
+
+    internal fun remove(entry: Entry) {
+        entries -= entry
+    }
+
+    /** Runs the newest enabled handler; false if there was none. */
+    fun dispatch(): Boolean {
+        val entry = entries.lastOrNull { it.enabled } ?: return false
+        entry.onBack()
+        return true
+    }
+}
+
+@Composable
+actual fun DraftBackHandler(enabled: Boolean, onBack: () -> Unit) {
+    val current = rememberUpdatedState(onBack)
+    val entry = androidx.compose.runtime.remember { DesktopBack.Entry(enabled) { current.value() } }
+    entry.enabled = enabled
+    DisposableEffect(entry) {
+        DesktopBack.add(entry)
+        onDispose { DesktopBack.remove(entry) }
+    }
+}

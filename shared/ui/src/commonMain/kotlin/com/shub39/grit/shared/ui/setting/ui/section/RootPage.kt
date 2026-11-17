@@ -25,6 +25,7 @@ import com.shub39.grit.core.settings.ImportanceDisplay
 import com.shub39.grit.core.settings.WallSettings
 import com.shub39.grit.core.settings.WallTextSize
 import com.shub39.grit.core.tasks.WallThresholds
+import com.shub39.grit.shared.ui.hasPhoneFeatures
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -119,7 +120,7 @@ fun RootPage(
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             // Grit Plus
-            item {
+            if (hasPhoneFeatures) item {
                 ListItem(
                     headlineContent = { Text(text = stringResource(Res.string.grit_plus)) },
                     colors = glassListItemColors(),
@@ -142,7 +143,7 @@ fun RootPage(
                 )
             }
 
-            item {
+            if (hasPhoneFeatures) item {
                 ListItem(
                     colors = glassListItemColors(),
                     leadingContent = {
@@ -190,7 +191,7 @@ fun RootPage(
             // General settings
             item {
                 GlassGroup {
-                    ListItem(
+                    if (hasPhoneFeatures) ListItem(
                         headlineContent = { Text(stringResource(Res.string.pause_notifications)) },
                         supportingContent = {
                             Text(stringResource(Res.string.pause_notifications_desc))
@@ -205,7 +206,7 @@ fun RootPage(
                         },
                         colors = glassListItemColors(),
                     )
-                    ListItem(
+                    if (hasPhoneFeatures) ListItem(
                         headlineContent = { Text(stringResource(Res.string.widget_text_size)) },
                         supportingContent = {
                             Column {
@@ -402,11 +403,11 @@ private fun thresholdsOf(days: List<String>): WallThresholds? {
 private fun WallSettingsGroup(wall: WallSettings, onChange: (WallSettings) -> Unit) {
     GlassGroup {
         ListItem(
-            headlineContent = { Text("Wall card size") },
+            headlineContent = { Text("Deadline steps") },
             supportingContent = {
                 Column {
                     Text(
-                        "Days left for each card size (Largest / Large / Medium). Tasks beyond the last limit, or without a deadline, get the smallest card."
+                        "Days left at which a deadline counts as due, soon and upcoming. Desk cards take deeper paper at each step, and the phone's Due list is grouped by them."
                     )
                     // Typing passes through states that are not valid yet (a ≥ b); those stay in
                     // the fields and are saved once the three days rise again.
@@ -419,7 +420,7 @@ private fun WallSettingsGroup(wall: WallSettings, onChange: (WallSettings) -> Un
                         Modifier.padding(top = 8.dp),
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
-                        listOf("Largest", "Large", "Medium").forEachIndexed { i, size ->
+                        listOf("Due", "Soon", "Upcoming").forEachIndexed { i, size ->
                             OutlinedTextField(
                                 value = days[i],
                                 onValueChange = { text ->
@@ -452,7 +453,7 @@ private fun WallSettingsGroup(wall: WallSettings, onChange: (WallSettings) -> Un
             colors = glassListItemColors(),
         )
         ListItem(
-            headlineContent = { Text("Wall text size") },
+            headlineContent = { Text("Card text size") },
             supportingContent = {
                 val labels =
                     mapOf(
@@ -474,7 +475,7 @@ private fun WallSettingsGroup(wall: WallSettings, onChange: (WallSettings) -> Un
             headlineContent = { Text("Show priority with") },
             supportingContent = {
                 Column {
-                    Text("The lower the priority, the fainter these parts of a card.")
+                    Text("In the Due, Later and Done lists, the lower the priority, the fainter these parts of a tile. On the desk, priority is the size of the card.")
                     GlassSegmented(
                         options = ImportanceDisplay.entries,
                         selected = wall.importance,

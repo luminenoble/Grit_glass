@@ -1,5 +1,17 @@
 [
   {
+    "version": "1.1.1.2",
+    "changes": [
+      "New Windows desktop app. It runs the same interface with a wide layout and keeps its own copy of your tasks in the GritGlass folder under %APPDATA%. Ctrl+N adds a task, Esc goes back, and the window remembers its size and place",
+      "On a wide window the task wall is now a free desk: tasks lie on warm paper as notes you can drag anywhere, slightly tilted, straightening and lifting under the pointer. Size shows importance (high priority or a passed deadline gets the largest card); the paper deepens from plain to caramel as the deadline nears. Pan by dragging the desk, the middle button or the wheel; zoom with Ctrl + wheel or a pinch. Double-click a card to edit it",
+      "Desk tools: Scatter, By category and Urgent to centre lay all cards out again (with Undo), and Fit frames them. New tasks find a free spot near the middle by themselves. Card positions stay on each device",
+      "On the phone, Overview shows Due instead of the wall: tasks with a deadline, soonest first, grouped by how close it is, with the same paper tones",
+      "LAN Sync (Setting → Backup): turn it on in the desktop app, scan its QR code or type its address, port and PIN on the phone, compare both sides, then push the phone's tasks to the computer or pull the computer's onto the phone. It stays inside your network and stops after 10 minutes without use or 5 wrong PINs",
+      "Before sync or a restore replaces a device's tasks, a restore point is saved on that device; the last 5 can be restored from the LAN Sync page",
+      "Settings: the three day limits now mark when a deadline is due, soon and upcoming (desk paper and Due groups); the text size applies to all cards"
+    ]
+  },
+  {
     "version": "1.1.1.1",
     "changes": [
       "Task wall & cards: removed the 48–68% title colour fade on normal/low priority cards and added perceived-luminance contrast clamping so light user-chosen text colours stay legible against warm beige paper (stored colours are unchanged)",

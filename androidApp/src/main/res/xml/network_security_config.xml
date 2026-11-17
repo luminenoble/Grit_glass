@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- LAN sync talks plain HTTP to the desktop app at a private address that cannot be listed in
+     advance, guarded by a one-time PIN. Everything else the app fetches is HTTPS. -->
+<network-security-config xmlns:tools="http://schemas.android.com/tools">
+    <base-config cleartextTrafficPermitted="true" tools:ignore="InsecureBaseConfiguration" />
+</network-security-config>

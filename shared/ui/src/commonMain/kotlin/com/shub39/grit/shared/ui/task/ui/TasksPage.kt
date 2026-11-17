@@ -45,6 +45,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.shub39.grit.shared.ui.app.AppSignals
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -110,6 +112,15 @@ private val taskConfiguration = SavedStateConfiguration {
 fun TasksPage(state: TaskState, onAction: (TaskAction) -> Unit) {
     var showCategoryEditor by remember { mutableStateOf(false) }
     val backStack = rememberNavBackStack(taskConfiguration, TaskRoutes.List)
+    // Ctrl+N on the desktop: a new task in the category shown.
+    val newTask by AppSignals.newTaskRequested.collectAsStateWithLifecycle()
+    LaunchedEffect(newTask, state.currentCategory) {
+        if (newTask && (state.currentCategory != null || state.tasks.isEmpty())) {
+            AppSignals.takeNewTask()
+            if (state.currentCategory != null && backStack.lastOrNull() != TaskRoutes.AddTask)
+                backStack.add(TaskRoutes.AddTask)
+        }
+    }
 
     Box(Modifier.fillMaxSize()) {
     NavDisplay(

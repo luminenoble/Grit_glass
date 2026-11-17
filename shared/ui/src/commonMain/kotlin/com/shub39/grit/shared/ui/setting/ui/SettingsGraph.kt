@@ -21,6 +21,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.shub39.grit.shared.ui.app.AppSignals
+import com.shub39.grit.shared.ui.setting.ui.section.LanSyncPage
+import com.shub39.grit.shared.ui.viewmodel.LanSyncViewModel
+import org.koin.compose.viewmodel.koinViewModel
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewWrapper
@@ -55,6 +62,8 @@ private sealed interface SettingsRoutes : NavKey {
 
     @Serializable data object Changelog : SettingsRoutes
 
+    @Serializable data object LanSync : SettingsRoutes
+
     @Serializable data object About : SettingsRoutes
 }
 
@@ -65,6 +74,7 @@ private val configuration = SavedStateConfiguration {
             subclass(SettingsRoutes.LookAndFeel::class, SettingsRoutes.LookAndFeel.serializer())
             subclass(SettingsRoutes.Backup::class, SettingsRoutes.Backup.serializer())
             subclass(SettingsRoutes.Changelog::class, SettingsRoutes.Changelog.serializer())
+            subclass(SettingsRoutes.LanSync::class, SettingsRoutes.LanSync.serializer())
             subclass(SettingsRoutes.About::class, SettingsRoutes.About.serializer())
         }
     }
@@ -80,6 +90,15 @@ fun SettingsGraph(
 ) =
     PageFill(modifier = modifier.background(MaterialTheme.colorScheme.background)) {
         val backStack = rememberNavBackStack(configuration, SettingsRoutes.Root)
+        // A sync link the app was opened with goes straight to LAN Sync.
+        val pairing by AppSignals.pairingRequested.collectAsStateWithLifecycle()
+        LaunchedEffect(pairing) {
+            if (pairing != null && backStack.lastOrNull() != SettingsRoutes.LanSync) {
+                backStack.removeAll { it != SettingsRoutes.Root }
+                backStack.add(SettingsRoutes.Backup)
+                backStack.add(SettingsRoutes.LanSync)
+            }
+        }
 
         NavDisplay(
             modifier =
@@ -115,6 +134,19 @@ fun SettingsGraph(
                         BackupPage(
                             state = state,
                             onAction = onAction,
+                            onNavigateToLanSync = { backStack.add(SettingsRoutes.LanSync) },
+                            onNavigateBack = {
+                                if (backStack.size != 1) backStack.removeLastOrNull()
+                            },
+                        )
+                    }
+
+                    entry<SettingsRoutes.LanSync>(metadata = horizontalTransitionMetadata()) {
+                        val vm: LanSyncViewModel = koinViewModel()
+                        val syncState by vm.state.collectAsStateWithLifecycle()
+                        LanSyncPage(
+                            state = syncState,
+                            onAction = vm::onAction,
                             onNavigateBack = {
                                 if (backStack.size != 1) backStack.removeLastOrNull()
                             },

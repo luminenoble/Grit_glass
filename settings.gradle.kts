@@ -49,4 +49,6 @@ include(":androidApp")
 
 include(":webDemo")
 
-include(":shared:ui", ":shared:core")
+include(":shared:ui", ":shared:core", ":shared:sync")
+
+include(":desktopApp")

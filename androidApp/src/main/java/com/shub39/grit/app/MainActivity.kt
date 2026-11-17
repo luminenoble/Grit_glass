@@ -16,6 +16,7 @@
  */
 package com.shub39.grit.app
 
+import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.compose.setContent
@@ -34,6 +35,8 @@ import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.shub39.grit.core.data.notification.GritNotificationManager.Companion.createNotificationChannel
 import com.shub39.grit.core.interfaces.BiometricUtils
+import com.shub39.grit.core.sync.LanPairing
+import com.shub39.grit.shared.ui.app.AppSignals
 import com.shub39.grit.shared.ui.LocalWindowSizeClass
 import com.shub39.grit.shared.ui.components.InitialLoading
 import com.shub39.grit.shared.ui.theme.GritTheme
@@ -51,6 +54,7 @@ class MainActivity : FragmentActivity() {
         installSplashScreen()
         enableEdgeToEdge()
         FileKit.init(this)
+        if (savedInstanceState == null) readSyncLink(intent)
 
         createNotificationChannel(this)
 
@@ -96,6 +100,17 @@ class MainActivity : FragmentActivity() {
                 }
             }
         }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        readSyncLink(intent)
+    }
+
+    /** Opened from the desktop's LAN Sync QR code: go to LAN Sync with its details filled in. */
+    private fun readSyncLink(intent: Intent?) {
+        val link = intent?.takeIf { it.action == Intent.ACTION_VIEW }?.dataString ?: return
+        LanPairing.parse(link)?.let(AppSignals::requestPairing)
     }
 
     private fun showBiometricPrompt(onSuccess: () -> Unit, onError: (Int, CharSequence) -> Unit) {
