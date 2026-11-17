@@ -31,7 +31,7 @@ val TYPOGRAPHY = Typography()
 
 @Composable
 fun flexFontEmphasis(slant: Float = 0f): FontFamily =
-    FontFamily(
+    platformFontFamily(bold = true) ?: FontFamily(
         Font(
             resource = Res.font.google_sans_flex,
             variationSettings =
@@ -45,7 +45,7 @@ fun flexFontEmphasis(slant: Float = 0f): FontFamily =
 
 @Composable
 fun flexFontRounded(): FontFamily =
-    FontFamily(
+    platformFontFamily(bold = true) ?: FontFamily(
         Font(
             resource = Res.font.google_sans_flex,
             variationSettings =
@@ -59,7 +59,8 @@ fun flexFontRounded(): FontFamily =
 /** function to get custom typography for Grit */
 @Composable
 fun provideTypography(font: FontResource? = Res.font.poppins_regular): Typography {
-    val selectedFont = font?.let { FontFamily(Font(font)) } ?: FontFamily.Default
+    val selectedFont =
+        platformFontFamily() ?: font?.let { FontFamily(Font(font)) } ?: FontFamily.Default
 
     return Typography(
         displayLarge = TYPOGRAPHY.displayLarge.copy(fontFamily = selectedFont),
