@@ -27,6 +27,8 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.atStartOfDayIn
 import org.koin.core.annotation.*
 
 @KoinViewModel
@@ -77,20 +79,23 @@ class TasksViewModel(
 
     /**
      * First showing of the app on a new day: yesterday's Today list goes back to its categories,
-     * silently. Nothing is counted and nothing is marked late.
+     * silently. Nothing is counted and nothing is marked late. Only tasks put on Today before the
+     * day began leave it, so a rerun (an interrupted start, a library synced in from a device that
+     * already started its day) keeps today's picks. It runs to the end even when the page is left
+     * meanwhile, so the day is never cleared without being recorded.
      */
-    private suspend fun startDay(today: LocalDate) {
-        try {
-            val last = datastore.getLastOpenedOn()
-            if (last == today) return
-            if (last != null && last < today) repo.clearToday()
-            datastore.setLastOpenedOn(today)
-        } catch (e: CancellationException) {
-            throw e
-        } catch (_: Exception) {
-            // Retried the next time the app is shown.
+    private suspend fun startDay(today: LocalDate) =
+        withContext(NonCancellable) {
+            try {
+                val last = datastore.getLastOpenedOn()
+                if (last == today) return@withContext
+                if (last != null && last < today)
+                    repo.clearToday(today.atStartOfDayIn(TimeZone.currentSystemDefault()))
+                datastore.setLastOpenedOn(today)
+            } catch (_: Exception) {
+                // Retried the next time the app is shown.
+            }
         }
-    }
 
     fun onAction(action: TaskAction) {
         if (action is TaskAction.DismissArchived) {

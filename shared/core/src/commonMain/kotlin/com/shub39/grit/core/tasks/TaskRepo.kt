@@ -17,6 +17,7 @@
 package com.shub39.grit.core.tasks
 
 import com.shub39.grit.core.settings.backup.TaskBackup
+import kotlin.time.Instant
 import kotlinx.coroutines.flow.Flow
 
 interface TaskRepo {
@@ -46,8 +47,13 @@ interface TaskRepo {
 
     suspend fun deleteAllCategories()
 
-    /** Takes every task off Today without counting as work on it. */
-    suspend fun clearToday()
+    /**
+     * Takes off Today every task last worked on before [before] (putting a task on Today counts as
+     * work on it), without counting as work. Tasks put on Today since then stay, so running it
+     * again on the same day, or after another device's library came in, never empties a fresh
+     * Today.
+     */
+    suspend fun clearToday(before: Instant)
 
     suspend fun reorderTasks(categoryId: Long, ids: List<Long>)
 

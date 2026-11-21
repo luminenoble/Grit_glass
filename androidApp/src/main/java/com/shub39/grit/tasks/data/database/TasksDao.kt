@@ -49,7 +49,9 @@ interface TasksDao {
     @Query("UPDATE tasks SET updatedAt = :time, lastTouchedAt = :time WHERE id = :id")
     suspend fun touch(id: Long, time: Instant)
 
-    @Query("UPDATE tasks SET isToday = 0 WHERE isToday = 1") suspend fun clearToday()
+    @Query("SELECT * FROM tasks WHERE isToday = 1") suspend fun getToday(): List<TaskEntity>
+
+    @Query("UPDATE tasks SET isToday = 0 WHERE id IN (:ids)") suspend fun leaveToday(ids: List<Long>)
 
     @Query("DELETE FROM tasks WHERE id = :id") suspend fun delete(id: Long)
 

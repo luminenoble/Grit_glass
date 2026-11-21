@@ -25,6 +25,7 @@ import com.shub39.grit.core.settings.backup.TaskBackup
 import com.shub39.grit.core.tasks.*
 import com.shub39.grit.tasks.data.database.TaskDatabase
 import com.shub39.grit.tasks.data.repository.TasksRepository
+import kotlin.time.Clock
 import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.LocalDate
 import org.junit.*
@@ -170,10 +171,15 @@ class TaskRepositoryTest {
         val worked = repo.getTaskById(id)!!
         assertTrue(worked.lastTouchedAt > created.lastTouchedAt)
         Thread.sleep(5)
-        repo.clearToday()
+        val dayStart = Clock.System.now()
+        Thread.sleep(5)
+        val picked = repo.upsertTask(Task(categoryId = c, title = "今天", isToday = true))
+        repo.clearToday(dayStart)
         val cleared = repo.getTaskById(id)!!
         assertFalse(cleared.isToday)
         assertEquals(worked.lastTouchedAt, cleared.lastTouchedAt)
         assertEquals(LocalDate(2999, 1, 2), cleared.deadline)
+        // Put on Today after the day began: a rerun of the rollover keeps it.
+        assertTrue(repo.getTaskById(picked)!!.isToday)
     }
 }

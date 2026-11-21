@@ -18,6 +18,7 @@ package com.shub39.grit.core.tasks
 
 import com.shub39.grit.core.settings.backup.TaskBackup
 import kotlin.time.Clock
+import kotlin.time.Instant
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
@@ -204,8 +205,15 @@ class SnapshotTaskRepo(
         write { Data(emptyList(), emptyList()) to Unit }
     }
 
-    override suspend fun clearToday() {
-        write { d -> d.copy(tasks = d.tasks.map { it.copy(isToday = false) }) to Unit }
+    override suspend fun clearToday(before: Instant) {
+        write { d ->
+            d.copy(
+                tasks =
+                    d.tasks.map {
+                        if (it.isToday && it.lastTouchedAt < before) it.copy(isToday = false) else it
+                    }
+            ) to Unit
+        }
     }
 
     override suspend fun reorderTasks(categoryId: Long, ids: List<Long>) {

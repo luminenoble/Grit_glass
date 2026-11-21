@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.1.1.3
+
+- Fixed: the whole Today list could vanish during the day while you were ticking tasks or putting them on Today. The daily reset now only takes off tasks put on Today before midnight, and it always finishes once started, so running it again (an interrupted start, or tasks synced in from another device) keeps today's picks
+- Desktop: when Maple Mono NL NF CN is installed, all text uses it, so Chinese and Latin share one set of glyphs
+
 ## 1.1.1.2
 
 - New Windows desktop app. It runs the same interface with a wide layout and keeps its own copy of your tasks in the GritGlass folder under %APPDATA%. Ctrl+N adds a task, Esc goes back, and the window remembers its size and place

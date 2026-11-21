@@ -28,6 +28,7 @@ import com.shub39.grit.tasks.data.*
 import com.shub39.grit.tasks.data.database.TaskDatabase
 import com.shub39.grit.widgets.WidgetUpdates
 import kotlin.time.Clock
+import kotlin.time.Instant
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.sync.Mutex
@@ -263,8 +264,12 @@ class TasksRepository(
         refresh(removed)
     }
 
-    override suspend fun clearToday() {
-        tasks.clearToday()
+    override suspend fun clearToday(before: Instant) {
+        db.withWriteTransaction {
+            // Instants are stored as text, which does not sort reliably: compare them here.
+            val stale = tasks.getToday().filter { it.lastTouchedAt < before }.map { it.id }
+            if (stale.isNotEmpty()) tasks.leaveToday(stale)
+        }
         refresh()
     }
 
